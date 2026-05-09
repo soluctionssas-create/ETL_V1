@@ -67,12 +67,24 @@ async def security_and_correlation_middleware(request: Request, call_next) -> Re
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'"
-    )
+    if settings.environment == "production":
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'"
+        )
+    else:
+        # Swagger UI carga assets desde jsdelivr y script inline en dev.
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https://fastapi.tiangolo.com; "
+            "connect-src 'self'; object-src 'none'; base-uri 'self'"
+        )
     # Remove fingerprinting headers
-    response.headers.pop("server", None)
-    response.headers.pop("x-powered-by", None)
+    if "server" in response.headers:
+        del response.headers["server"]
+    if "x-powered-by" in response.headers:
+        del response.headers["x-powered-by"]
 
     return response
 

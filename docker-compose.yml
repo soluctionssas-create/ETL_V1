@@ -1,49 +1,119 @@
 services:
+  # ─── Infraestructura ────────────────────────────────────────────────────────
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
+    container_name: etl_postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: etl_saas
-      POSTGRES_USER: etl_user
-      POSTGRES_PASSWORD: etl_pass
+      POSTGRES_DB: ${POSTGRES_DB:-etl_db}
+      POSTGRES_USER: ${POSTGRES_USER:-etl_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-etl_pass}
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-etl_user} -d ${POSTGRES_DB:-etl_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
+    container_name: etl_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3-management-alpine
+    container_name: etl_rabbitmq
+    restart: unless-stopped
     ports:
       - "5672:5672"
       - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
-  redpanda:
-    image: redpandadata/redpanda:v24.2.12
-    command:
-      - redpanda
-      - start
-      - --overprovisioned
-      - --smp
-      - "1"
-      - --memory
-      - 1G
-      - --reserve-memory
-      - 0M
-      - --node-id
-      - "0"
-      - --check=false
-      - --kafka-addr
-      - PLAINTEXT://0.0.0.0:9092
-      - --advertise-kafka-addr
-      - PLAINTEXT://redpanda:9092
+  # ─── Backend API ────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: etl_api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-etl_user}:${POSTGRES_PASSWORD:-etl_pass}@postgres:5432/${POSTGRES_DB:-etl_db}
+      REDIS_URL: redis://redis:6379/0
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
     ports:
-      - "9092:9092"
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/live')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ─── Celery Worker ──────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: etl_worker
+    restart: unless-stopped
+    command: celery -A app.worker.celery_app worker --loglevel=info --queues=etl.parse,etl.classify,etl.export -c 2
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-etl_user}:${POSTGRES_PASSWORD:-etl_pass}@postgres:5432/${POSTGRES_DB:-etl_db}
+      REDIS_URL: redis://redis:6379/0
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  # ─── Frontend Next.js ───────────────────────────────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: etl_web
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pg_data:
