@@ -1,0 +1,150 @@
+/**
+ * Cliente HTTP centralizado para la API backend.
+ * Adjunta automáticamente el Authorization header y maneja errores 401.
+ */
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+
+type FetchOptions = RequestInit & { params?: Record<string, string | number | undefined> };
+
+async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
+  const { params, ...fetchOpts } = options;
+
+  const url = new URL(`${API_BASE}${path}`);
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined) url.searchParams.set(k, String(v));
+    });
+  }
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(fetchOpts.headers as Record<string, string>),
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(url.toString(), { ...fetchOpts, headers });
+
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+      window.location.href = "/login";
+    }
+    throw new Error("Unauthorized");
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.detail ?? `HTTP ${res.status}`);
+  }
+
+  if (res.status === 204) return undefined as unknown as T;
+  return res.json();
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+export interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+export async function login(email: string, password: string): Promise<TokenResponse> {
+  return apiFetch<TokenResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function getMe() {
+  return apiFetch<{ id: string; email: string; full_name: string; role: string }>("/auth/me");
+}
+
+// ── Batches ───────────────────────────────────────────────────────────────────
+export interface Batch {
+  id: string;
+  filename: string;
+  file_size: number;
+  file_type: string;
+  status: string;
+  total_invoices: number;
+  processed_invoices: number;
+  failed_invoices: number;
+  celery_task_id: string | null;
+  error_message: string | null;
+}
+
+export interface PaginatedResponse<T> {
+  total: number;
+  page: number;
+  page_size: number;
+  items: T[];
+}
+
+export async function listBatches(page = 1, pageSize = 20, status?: string) {
+  return apiFetch<PaginatedResponse<Batch>>("/invoices/batches", {
+    params: { page, page_size: pageSize, status },
+  });
+}
+
+export async function getBatch(batchId: string) {
+  return apiFetch<Batch>(`/invoices/batches/${batchId}`);
+}
+
+export async function uploadBatch(file: File): Promise<Batch> {
+  const form = new FormData();
+  form.append("file", file);
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}/invoices/batches`, {
+    method: "POST",
+    headers,
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.detail ?? `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// ── Invoices ──────────────────────────────────────────────────────────────────
+export interface Invoice {
+  id: string;
+  batch_id: string;
+  invoice_number: string | null;
+  vendor_name: string | null;
+  vendor_tax_id: string | null;
+  total_amount: number | null;
+  tax_amount: number | null;
+  currency: string;
+  status: string;
+}
+
+export async function listBatchInvoices(batchId: string, page = 1, pageSize = 50) {
+  return apiFetch<PaginatedResponse<Invoice>>(`/invoices/batches/${batchId}/invoices`, {
+    params: { page, page_size: pageSize },
+  });
+}
+
+// ── Exports ───────────────────────────────────────────────────────────────────
+export interface ExportJob {
+  id: string;
+  erp_system: string;
+  status: string;
+  total_records: number;
+  exported_records: number;
+  error_message: string | null;
+}
+
+export async function triggerExport(batchId: string, erpSystem: string): Promise<ExportJob> {
+  return apiFetch<ExportJob>("/exports/run", {
+    method: "POST",
+    body: JSON.stringify({ batch_id: batchId, erp_system: erpSystem }),
+  });
+}

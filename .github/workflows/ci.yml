@@ -2,32 +2,77 @@ name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "develop"]
   pull_request:
 
 jobs:
+  # ── Backend API Tests ───────────────────────────────────────────────────────
   api:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/api
+    env:
+      DATABASE_URL: "sqlite:///./test.db"
+      REDIS_URL: "redis://localhost:6379/0"
+      JWT_SECRET: "ci-test-secret-key-do-not-use-in-production"
+      ENVIRONMENT: "development"
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt pytest
-      - run: pytest ../../tests/api -q
+          cache: "pip"
+          cache-dependency-path: apps/api/requirements.txt
 
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run linting (ruff)
+        run: pip install ruff && ruff check app/ --ignore E501 || true
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
+  # ── Frontend Build ──────────────────────────────────────────────────────────
   web:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/web
+    env:
+      NEXT_PUBLIC_API_URL: "http://localhost:8000/api/v1"
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: npm install
-      - run: npm run build
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline || npm install
+
+      - name: Type check
+        run: npx tsc --noEmit || true
+
+      - name: Build
+        run: npm run build
+
+  # ── Docker Build Check ──────────────────────────────────────────────────────
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build API image
+        run: docker build -t etl-api:ci apps/api/
+
+      - name: Build Worker image
+        run: docker build -t etl-worker:ci apps/worker/
+
+      - name: Build Web image
+        run: docker build -t etl-web:ci apps/web/
+
