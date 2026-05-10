@@ -41,7 +41,20 @@ function readTenantFromToken(token: string | null): string | null {
 async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
   const { params, ...fetchOpts } = options;
 
-  const url = new URL(`${API_BASE}${path}`);
+  // Use Next.js API routes for auth endpoints (no need for external backend)
+  // Use API_BASE for other endpoints (batches, invoices, etc.)
+  const isAuthEndpoint = path.startsWith("/auth/");
+  let url: URL;
+  
+  if (isAuthEndpoint) {
+    // For auth endpoints, use relative path to /api/auth/*
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3010";
+    url = new URL(`/api${path}`, baseUrl);
+  } else {
+    // For other endpoints, use API_BASE
+    url = new URL(`${API_BASE}${path}`);
+  }
+
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined) url.searchParams.set(k, String(v));
