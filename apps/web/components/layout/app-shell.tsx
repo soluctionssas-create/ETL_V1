@@ -131,7 +131,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }}
       >
         <Toolbar sx={{ gap: 1.2, minWidth: 0 }}>
-          <IconButton sx={{ display: { lg: "none" } }} onClick={() => setMobileOpen(true)}>
+          <IconButton
+            sx={{ display: { lg: "none" } }}
+            onClick={(event) => {
+              event.currentTarget.blur();
+              setMobileOpen(true);
+            }}
+          >
             <MenuRounded />
           </IconButton>
 
@@ -165,10 +171,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <NotificationsNoneRounded />
               </Badge>
             </IconButton>
-            <IconButton onClick={(event) => setMenuAnchor(event.currentTarget)} aria-label="Menu de usuario">
+            <IconButton
+              onClick={(event) => {
+                event.currentTarget.blur();
+                setMenuAnchor(event.currentTarget);
+              }}
+              aria-label="Menu de usuario"
+            >
               <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main" }}>A</Avatar>
             </IconButton>
-            <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
+            <Menu
+              anchorEl={menuAnchor}
+              open={Boolean(menuAnchor)}
+              onClose={() => setMenuAnchor(null)}
+              keepMounted
+              disableAutoFocusItem
+            >
               <MenuItem onClick={() => router.push("/parametrizacion")}>Preferencias</MenuItem>
               <MenuItem onClick={logout}>Cerrar sesion</MenuItem>
             </Menu>
@@ -181,7 +199,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           variant="temporary"
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
-          ModalProps={{ keepMounted: true }}
+          ModalProps={{ keepMounted: true, disableRestoreFocus: true, disableAutoFocus: true }}
           sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: drawerWidth } }}
         >
           {drawerContent}

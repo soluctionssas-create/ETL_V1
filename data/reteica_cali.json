@@ -1,0 +1,38 @@
+{
+  "account_code": "23680101",
+  "city_match": "CALI",
+  "service": {
+    "base_uvt": 3,
+    "base_cop": 157122,
+    "rate": 0.01,
+    "keywords": [
+      "servicio",
+      "mantenimiento",
+      "soporte",
+      "licencia",
+      "software",
+      "suscripcion",
+      "transporte",
+      "flete",
+      "hotel",
+      "restaurante",
+      "aseo",
+      "vigilancia",
+      "honorario",
+      "consultoria"
+    ]
+  },
+  "purchase": {
+    "base_uvt": 15,
+    "base_cop": 785610,
+    "rate": 0.0077,
+    "keywords": [
+      "compra",
+      "mercancia",
+      "producto",
+      "insumo",
+      "gasolina",
+      "combustible"
+    ]
+  }
+}

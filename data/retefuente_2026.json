@@ -1,0 +1,525 @@
+{
+  "uvt_value_cop": 52374,
+  "default_rule": {
+    "concept": "Compras generales declarantes",
+    "normativity": "Art. 401 ET / DUR 1625",
+    "base_uvt": 10,
+    "base_cop": 523740,
+    "rate": 0.025,
+    "account_code": "236540",
+    "keywords": []
+  },
+  "rules": [
+    {
+      "concept": "Adquisicion de bienes raices vivienda (tramo 1)",
+      "normativity": "Art 1.2.4.9.1 DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.01,
+      "account_code": "236540",
+      "keywords": [
+        "inmueble",
+        "vivienda",
+        "notaria",
+        "escritura",
+        "predio"
+      ]
+    },
+    {
+      "concept": "Adquisicion de bienes raices vivienda (tramo excedente)",
+      "normativity": "Art 1.2.4.9.1 DUR 1625",
+      "base_uvt": 10000,
+      "base_cop": 523740000,
+      "rate": 0.025,
+      "account_code": "236540",
+      "keywords": [
+        "inmueble",
+        "vivienda",
+        "notaria",
+        "escritura",
+        "predio"
+      ]
+    },
+    {
+      "concept": "Adquisicion de bienes raices uso diferente a vivienda",
+      "normativity": "Art 1.2.4.9.1 DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.025,
+      "account_code": "236540",
+      "keywords": [
+        "lote",
+        "bodega",
+        "oficina",
+        "local",
+        "inmueble comercial"
+      ]
+    },
+    {
+      "concept": "Adquisicion de vehiculos",
+      "normativity": "Art 1.2.4.9.1 DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.01,
+      "account_code": "236540",
+      "keywords": [
+        "vehiculo",
+        "carro",
+        "camion",
+        "moto",
+        "automotor"
+      ]
+    },
+    {
+      "concept": "Arrendamiento bienes inmuebles",
+      "normativity": "Art 401 ET y 1.2.4.10.6 DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.035,
+      "account_code": "236530",
+      "keywords": [
+        "arrend",
+        "alquiler",
+        "canon"
+      ]
+    },
+    {
+      "concept": "Arrendamiento bienes muebles",
+      "normativity": "Art 1.2.4.4.10 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.04,
+      "account_code": "236530",
+      "keywords": [
+        "alquiler equipo",
+        "arrendamiento mueble",
+        "renting equipo"
+      ]
+    },
+    {
+      "concept": "Comisiones bolsa de valores",
+      "normativity": "Art 393 ET / 1.2.4.3.3 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.03,
+      "account_code": "236520",
+      "keywords": [
+        "bolsa",
+        "comision bolsa",
+        "broker bolsa"
+      ]
+    },
+    {
+      "concept": "Comisiones sector financiero",
+      "normativity": "Art 1.2.4.3.3 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.11,
+      "account_code": "236520",
+      "keywords": [
+        "comision",
+        "intermediacion",
+        "broker",
+        "financiero"
+      ]
+    },
+    {
+      "concept": "Compras con tarjeta debito o credito",
+      "normativity": "Art 1.3.2.1.8 y 1.3.2.1.2 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.015,
+      "account_code": "236540",
+      "keywords": [
+        "tarjeta credito",
+        "tarjeta debito",
+        "datofono"
+      ]
+    },
+    {
+      "concept": "Compras agropecuarias sin procesamiento",
+      "normativity": "Art 1.2.4.6.7 y 1.2.4.6.10 DUR 1625",
+      "base_uvt": 70,
+      "base_cop": 3666180,
+      "rate": 0.015,
+      "account_code": "236540",
+      "keywords": [
+        "agricola",
+        "pecuario",
+        "agro",
+        "cosecha",
+        "ganado"
+      ]
+    },
+    {
+      "concept": "Compras de cafe pergamino o cereza",
+      "normativity": "Art 1.2.4.6.8 DUR 1625",
+      "base_uvt": 70,
+      "base_cop": 3666180,
+      "rate": 0.005,
+      "account_code": "236540",
+      "keywords": [
+        "cafe pergamino",
+        "cafe cereza",
+        "cafe"
+      ]
+    },
+    {
+      "concept": "Compras de combustibles derivados del petroleo",
+      "normativity": "Art 1.2.4.10.5 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.001,
+      "account_code": "236540",
+      "keywords": [
+        "gasolina",
+        "diesel",
+        "combustible",
+        "acpm"
+      ]
+    },
+    {
+      "concept": "Compras generales declarantes",
+      "normativity": "Art 401 ET / 1.2.4.9.1 y 1.2.4.9.2 DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.025,
+      "account_code": "236540",
+      "keywords": [
+        "compra",
+        "mercancia",
+        "insumo",
+        "producto"
+      ]
+    },
+    {
+      "concept": "Compras generales no declarantes",
+      "normativity": "Art 401 ET / 1.2.4.9.1 y 1.2.4.9.2 DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.035,
+      "account_code": "236540",
+      "keywords": [
+        "compra no declarante"
+      ]
+    },
+    {
+      "concept": "Compras de oro",
+      "normativity": "Art 13 DC 2076/92 mod art 3 DC 1505/11",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.025,
+      "account_code": "236540",
+      "keywords": [
+        "oro",
+        "metal precioso"
+      ]
+    },
+    {
+      "concept": "Contratos de construccion y urbanizacion",
+      "normativity": "Art 1.2.4.9.1 DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.02,
+      "account_code": "236525",
+      "keywords": [
+        "construccion",
+        "urbanizacion",
+        "obra civil"
+      ]
+    },
+    {
+      "concept": "Consultoria de obras publicas",
+      "normativity": "Art 1.2.4.10.1 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.02,
+      "account_code": "236525",
+      "keywords": [
+        "consultoria obra publica",
+        "interventoria publica"
+      ]
+    },
+    {
+      "concept": "Consultoria en ingenieria no declarantes",
+      "normativity": "Art 1.2.4.10.3 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.1,
+      "account_code": "236515",
+      "keywords": [
+        "consultoria ingenieria no declarante"
+      ]
+    },
+    {
+      "concept": "Consultoria en ingenieria declarantes",
+      "normativity": "Art 1.2.4.10.3 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.06,
+      "account_code": "236515",
+      "keywords": [
+        "consultoria ingenieria",
+        "interventoria",
+        "diseno ingenieria"
+      ]
+    },
+    {
+      "concept": "Software y desarrollo (tarifa especial 10 u 11)",
+      "normativity": "Art 1.2.4.3.1 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.11,
+      "account_code": "236525",
+      "keywords": [
+        "software",
+        "desarrollo",
+        "pagina web",
+        "licenciamiento"
+      ]
+    },
+    {
+      "concept": "Software y desarrollo declarantes",
+      "normativity": "Art 1.2.4.3.1 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.035,
+      "account_code": "236525",
+      "keywords": [
+        "software declarante"
+      ]
+    },
+    {
+      "concept": "Enajenacion de activos fijos PN",
+      "normativity": "Art 398 ET / 1.2.4.5.1 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.01,
+      "account_code": "236540",
+      "keywords": [
+        "activo fijo",
+        "enajenacion",
+        "venta activo"
+      ]
+    },
+    {
+      "concept": "Estudios de mercado y encuestas",
+      "normativity": "Art 1.2.4.3.1 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.04,
+      "account_code": "236525",
+      "keywords": [
+        "estudio de mercado",
+        "encuesta",
+        "investigacion mercado"
+      ]
+    },
+    {
+      "concept": "Honorarios y comisiones no declarantes",
+      "normativity": "Art 392 ET / 1.2.4.3.1 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.1,
+      "account_code": "236515",
+      "keywords": [
+        "honorario no declarante",
+        "comision no declarante"
+      ]
+    },
+    {
+      "concept": "Honorarios y comisiones declarantes",
+      "normativity": "Art 392 ET / 1.2.4.3.1 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.11,
+      "account_code": "236515",
+      "keywords": [
+        "honorario",
+        "asesoria",
+        "consultoria",
+        "abogado",
+        "contador"
+      ]
+    },
+    {
+      "concept": "Intereses y rendimientos financieros",
+      "normativity": "Art 395 y 396 ET / 1.2.4.2.5 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.07,
+      "account_code": "236520",
+      "keywords": [
+        "interes",
+        "rendimiento financiero",
+        "credito"
+      ]
+    },
+    {
+      "concept": "Licenciamiento y derecho de uso de software",
+      "normativity": "Art 1.2.4.3.1 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.035,
+      "account_code": "236525",
+      "keywords": [
+        "licencia",
+        "derecho de uso",
+        "suscripcion software"
+      ]
+    },
+    {
+      "concept": "Otros ingresos tributarios declarantes",
+      "normativity": "Art 401 ET y DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.025,
+      "account_code": "236540",
+      "keywords": [
+        "otros ingresos",
+        "ingreso tributario"
+      ]
+    },
+    {
+      "concept": "Otros ingresos tributarios no declarantes",
+      "normativity": "Art 401 ET y DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.035,
+      "account_code": "236540",
+      "keywords": [
+        "otros ingresos no declarante"
+      ]
+    },
+    {
+      "concept": "Servicios de hoteles y restaurantes",
+      "normativity": "Art 1.2.4.10.6 DUR 1625",
+      "base_uvt": 2,
+      "base_cop": 104748,
+      "rate": 0.035,
+      "account_code": "236525",
+      "keywords": [
+        "hotel",
+        "hospedaje",
+        "restaurante",
+        "alimentacion"
+      ]
+    },
+    {
+      "concept": "Transporte nacional de carga",
+      "normativity": "Art 1.2.4.4.8 y 1.2.4.4.6 DUR 1625",
+      "base_uvt": 2,
+      "base_cop": 104748,
+      "rate": 0.01,
+      "account_code": "236525",
+      "keywords": [
+        "transporte carga",
+        "flete",
+        "logistica"
+      ]
+    },
+    {
+      "concept": "Transporte pasajeros nacional aereo o maritimo",
+      "normativity": "Art 1.2.4.4.6 DUR 1625",
+      "base_uvt": 2,
+      "base_cop": 104748,
+      "rate": 0.01,
+      "account_code": "236525",
+      "keywords": [
+        "tiquete",
+        "aereo",
+        "maritimo",
+        "pasaje"
+      ]
+    },
+    {
+      "concept": "Transporte pasajeros terrestre",
+      "normativity": "Art 1.2.4.9.1 y 1.2.4.10.6 DUR 1625",
+      "base_uvt": 10,
+      "base_cop": 523740,
+      "rate": 0.035,
+      "account_code": "236525",
+      "keywords": [
+        "bus",
+        "taxi",
+        "transporte terrestre"
+      ]
+    },
+    {
+      "concept": "Servicios generales declarantes",
+      "normativity": "Art 392 ET / 1.2.4.4.14 DUR 1625",
+      "base_uvt": 2,
+      "base_cop": 104748,
+      "rate": 0.04,
+      "account_code": "236525",
+      "keywords": [
+        "servicio",
+        "mantenimiento",
+        "aseo",
+        "vigilancia",
+        "soporte"
+      ]
+    },
+    {
+      "concept": "Servicios generales no declarantes",
+      "normativity": "Art 392 ET / 1.2.4.4.14 DUR 1625",
+      "base_uvt": 2,
+      "base_cop": 104748,
+      "rate": 0.06,
+      "account_code": "236525",
+      "keywords": [
+        "servicio no declarante"
+      ]
+    },
+    {
+      "concept": "Servicios integrales de salud (IPS)",
+      "normativity": "Art 392 ET / 1.2.4.4.12 DUR 1625",
+      "base_uvt": 2,
+      "base_cop": 104748,
+      "rate": 0.02,
+      "account_code": "236525",
+      "keywords": [
+        "ips",
+        "salud",
+        "clinica",
+        "hospital"
+      ]
+    },
+    {
+      "concept": "Servicios temporales (AIU)",
+      "normativity": "Art 462-1 ET / 1.2.4.4.10 DUR 1625",
+      "base_uvt": 2,
+      "base_cop": 104748,
+      "rate": 0.01,
+      "account_code": "236525",
+      "keywords": [
+        "servicios temporales",
+        "aiu"
+      ]
+    },
+    {
+      "concept": "Servicios vigilancia y aseo (AIU)",
+      "normativity": "Art 462-1 ET / 1.2.4.4.10 DUR 1625",
+      "base_uvt": 2,
+      "base_cop": 104748,
+      "rate": 0.02,
+      "account_code": "236525",
+      "keywords": [
+        "vigilancia",
+        "aseo aiu"
+      ]
+    },
+    {
+      "concept": "Servicios de sismica",
+      "normativity": "Art 1.2.4.4.13 DUR 1625",
+      "base_uvt": 0,
+      "base_cop": 0,
+      "rate": 0.06,
+      "account_code": "236525",
+      "keywords": [
+        "sismica",
+        "geofisica"
+      ]
+    }
+  ]
+}

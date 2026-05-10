@@ -1,0 +1,436 @@
+{
+  "account_code": "23680101",
+  "_uvt_2026": 52374,
+  "_nota": "Tarifas ReteICA 2026 por ciudad. base_cop = base_uvt * 52374 (UVT 2026). Fuentes: acuerdos municipales vigentes y DUR 1625/2016.",
+  "cities": {
+    "CALI": {
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.01,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 15,
+        "base_cop": 785610,
+        "rate": 0.0077,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "BOGOTA": {
+      "_ref": "Acuerdo 65/2002 SDH Bogotá — Resolución SDH-000387/2020. Tarifa unificada 11.04‰ para servicios y comercio.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.01104,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria",
+          "arrendamiento"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 27,
+        "base_cop": 1414098,
+        "rate": 0.01104,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "MEDELLIN": {
+      "_ref": "Decreto Municipal 0883/2009 Medellín y actualizaciones. Servicios 10‰, comercio 4.14‰.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.01,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 20,
+        "base_cop": 1047480,
+        "rate": 0.00414,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "BARRANQUILLA": {
+      "_ref": "Acuerdo 010/2006 Barranquilla y modificaciones. Servicios 8‰, comercio 5‰.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.008,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 15,
+        "base_cop": 785610,
+        "rate": 0.005,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "BUCARAMANGA": {
+      "_ref": "Acuerdo Municipal Bucaramanga vigente 2026. Servicios 7‰, compras 4‰.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.007,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 15,
+        "base_cop": 785610,
+        "rate": 0.004,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "PEREIRA": {
+      "_ref": "Acuerdo Municipal Pereira vigente 2026. Servicios 7‰, compras 4‰.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.007,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 15,
+        "base_cop": 785610,
+        "rate": 0.004,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "MANIZALES": {
+      "_ref": "Acuerdo Municipal Manizales vigente 2026. Servicios 7‰, compras 4‰.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.007,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 15,
+        "base_cop": 785610,
+        "rate": 0.004,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "ARMENIA": {
+      "_ref": "Acuerdo Municipal Armenia vigente 2026. Servicios 7‰, compras 4‰.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.007,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 15,
+        "base_cop": 785610,
+        "rate": 0.004,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "IBAGUE": {
+      "_ref": "Acuerdo Municipal Ibagué vigente 2026. Servicios 8‰, compras 4‰.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.008,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 15,
+        "base_cop": 785610,
+        "rate": 0.004,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "CUCUTA": {
+      "_ref": "Acuerdo Municipal Cúcuta vigente 2026. Servicios 7‰, compras 4‰.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.007,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 15,
+        "base_cop": 785610,
+        "rate": 0.004,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    },
+    "CARTAGENA": {
+      "_ref": "Decreto 1147/2014 Cartagena y actualizaciones. Servicios 8‰, compras 5‰.",
+      "service": {
+        "account_code": "23680102",
+        "base_uvt": 3,
+        "base_cop": 157122,
+        "rate": 0.008,
+        "keywords": [
+          "servicio",
+          "mantenimiento",
+          "soporte",
+          "licencia",
+          "software",
+          "suscripcion",
+          "transporte",
+          "flete",
+          "hotel",
+          "restaurante",
+          "aseo",
+          "vigilancia",
+          "honorario",
+          "consultoria"
+        ]
+      },
+      "purchase": {
+        "account_code": "23680101",
+        "base_uvt": 15,
+        "base_cop": 785610,
+        "rate": 0.005,
+        "keywords": [
+          "compra",
+          "mercancia",
+          "producto",
+          "insumo",
+          "gasolina",
+          "combustible"
+        ]
+      }
+    }
+  }
+}

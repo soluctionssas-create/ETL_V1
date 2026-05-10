@@ -1,0 +1,9 @@
+{
+  "account_code": "236701",
+  "fallback_rate": 0.15,
+  "legal_reference": "Art. 437-1 ET / Decreto 380/1996",
+  "apply_when": {
+    "missing_or_zero_reteiva": true,
+    "iva_greater_than_zero": true
+  }
+}
