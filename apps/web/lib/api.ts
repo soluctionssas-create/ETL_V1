@@ -159,24 +159,31 @@ export async function getBatch(batchId: string) {
   return apiFetch<Batch>(`/invoices/batches/${batchId}`);
 }
 
-export async function uploadBatch(file: File): Promise<Batch> {
-  const form = new FormData();
-  form.append("file", file);
-
+export async function uploadBatch(files: File[]): Promise<Batch[]> {
   const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
   const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}/invoices/batches`, {
-    method: "POST",
-    headers,
-    body: form,
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.detail ?? `HTTP ${res.status}`);
+  const results: Batch[] = [];
+  for (const file of files) {
+    const form = new FormData();
+    form.append("file", file);
+
+    const res = await fetch(`${API_BASE}/invoices/batches`, {
+      method: "POST",
+      headers,
+      body: form,
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body?.detail ?? `HTTP ${res.status}`);
+    }
+
+    results.push((await res.json()) as Batch);
   }
-  return res.json();
+
+  return results;
 }
 
 // ── Invoices ──────────────────────────────────────────────────────────────────
@@ -184,11 +191,43 @@ export interface Invoice {
   id: string;
   batch_id: string;
   invoice_number: string | null;
+  document_type?: string | null;
+  cufe_cude?: string | null;
+  folio?: string | null;
+  prefix?: string | null;
   vendor_name: string | null;
   vendor_tax_id: string | null;
+  receiver_name?: string | null;
+  receiver_tax_id?: string | null;
   total_amount: number | null;
   tax_amount: number | null;
   currency: string;
+  payment_form?: string | null;
+  payment_method?: string | null;
+  issue_date?: string | null;
+  reception_date?: string | null;
+  item_code?: string | null;
+  item_description?: string | null;
+  quantity?: number | null;
+  unit_price?: number | null;
+  iva?: number | null;
+  ica?: number | null;
+  ic?: number | null;
+  inc?: number | null;
+  timbre?: number | null;
+  inc_bolsas?: number | null;
+  in_carbono?: number | null;
+  in_combustibles?: number | null;
+  ic_datos?: number | null;
+  icl?: number | null;
+  inpp?: number | null;
+  ibua?: number | null;
+  icui?: number | null;
+  rete_iva?: number | null;
+  rete_renta?: number | null;
+  rete_ica?: number | null;
+  group_name?: string | null;
+  raw_data?: Record<string, unknown> | null;
   status: string;
 }
 

@@ -132,15 +132,35 @@ export default function ParametrizacionPage() {
     void loadTaxConfig();
   }, []);
 
-  function saveLocal() {
+  async function saveLocal() {
     if (!validation.ok) {
       setMessage("No se guardo: hay errores de sintaxis JSON.");
       return;
     }
-    localStorage.setItem("param_retefuente", retefuente);
-    localStorage.setItem("param_reteica", reteica);
-    localStorage.setItem("param_reteiva", reteiva);
-    setMessage("Parametrizacion fiscal guardada localmente en el navegador.");
+
+    try {
+      const response = await fetch("/api/v1/config/tax", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          retefuente: JSON.parse(retefuente),
+          reteica: JSON.parse(reteica),
+          reteiva: JSON.parse(reteiva),
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { detail?: string };
+        throw new Error(payload.detail ?? `Error ${response.status}`);
+      }
+
+      localStorage.setItem("param_retefuente", retefuente);
+      localStorage.setItem("param_reteica", reteica);
+      localStorage.setItem("param_reteiva", reteiva);
+      setMessage("Parametrizacion fiscal aplicada al proyecto y guardada localmente.");
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : "No fue posible guardar la configuracion fiscal.");
+    }
   }
 
   function formatActiveJson() {
@@ -253,7 +273,7 @@ export default function ParametrizacionPage() {
         </Paper>
       ) : null}
 
-      {message ? <Alert severity={message.startsWith("Parametrizacion") ? "success" : "warning"}>{message}</Alert> : null}
+      {message ? <Alert severity={message.includes("aplicada") ? "success" : "warning"}>{message}</Alert> : null}
     </Stack>
   );
 }

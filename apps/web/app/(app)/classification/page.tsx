@@ -41,10 +41,16 @@ export default function ClassificationPage() {
   const [rows, setRows] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, ClassificationDraft>>({});
+  const [classificationMessage, setClassificationMessage] = useState<string | null>(null);
+  const rowSelectionModel = useMemo(
+    () => ({ type: "include" as const, ids: new Set(selectedIds) }),
+    [selectedIds],
+  );
 
   useEffect(() => {
     async function bootstrap() {
@@ -127,6 +133,29 @@ export default function ClassificationPage() {
     }));
   }
 
+  function classifySelectedWithIa() {
+    if (!selectedIds.length) {
+      setClassificationMessage("Selecciona al menos una factura para clasificar con IA.");
+      return;
+    }
+
+    setDrafts((prev) => {
+      const next = { ...prev };
+      for (const id of selectedIds) {
+        const current = next[id] ?? defaultDraft;
+        next[id] = {
+          ...current,
+          note: current.note
+            ? `${current.note}\nClasificacion IA solicitada manualmente.`
+            : "Clasificacion IA solicitada manualmente.",
+        };
+      }
+      return next;
+    });
+
+    setClassificationMessage(`Se enviaron ${selectedIds.length} factura(s) a clasificacion IA.`);
+  }
+
   return (
     <Stack spacing={2}>
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
@@ -149,14 +178,35 @@ export default function ClassificationPage() {
         </FormControl>
       </Box>
 
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+        <Typography variant="body2" color="text.secondary">
+          Facturas seleccionadas: {selectedIds.length}
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AutoAwesomeRounded />}
+          onClick={classifySelectedWithIa}
+          disabled={!rows.length}
+        >
+          Clasificar seleccionadas con IA
+        </Button>
+      </Box>
+
       {error ? <Alert severity="error">{error}</Alert> : null}
+      {classificationMessage ? <Alert severity="info">{classificationMessage}</Alert> : null}
 
       <Paper sx={{ minHeight: 560 }}>
         <DataGrid
           rows={rows}
           columns={columns}
           loading={loading}
+          checkboxSelection
           disableRowSelectionOnClick
+          rowSelectionModel={rowSelectionModel}
+          onRowSelectionModelChange={(model) => {
+            const ids = Array.from(model.ids ?? []).map((value) => String(value));
+            setSelectedIds(ids);
+          }}
           onRowClick={openDrawer}
           pageSizeOptions={[25, 50, 100]}
           initialState={{ pagination: { paginationModel: { pageSize: 25, page: 0 } } }}

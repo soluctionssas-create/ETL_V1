@@ -49,12 +49,12 @@ export default function InvoicesPage() {
   }, []);
 
   async function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files ? Array.from(event.target.files) : [];
+    if (!files.length) return;
     setUploading(true);
     setError(null);
     try {
-      await uploadBatch(file);
+      await uploadBatch(files);
       await refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "No se pudo subir el lote");
@@ -117,7 +117,7 @@ export default function InvoicesPage() {
           </Button>
           <Button variant="contained" component="label" startIcon={<UploadFileRounded />} disabled={uploading}>
             {uploading ? "Subiendo" : "Subir lote"}
-            <input hidden type="file" accept=".pdf,.xml,.zip,.csv" onChange={onFileChange} />
+            <input hidden type="file" accept=".pdf,.xml,.zip,.csv" multiple onChange={onFileChange} />
           </Button>
         </Stack>
       </Box>

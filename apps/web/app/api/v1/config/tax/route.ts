@@ -2,8 +2,24 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 
-function rootPath(...segments: string[]) {
-  return path.join(process.cwd(), "..", "..", "..", ...segments);
+function dataDirCandidates() {
+  return [
+    path.resolve(process.cwd(), "..", "..", "data"),
+    path.resolve(process.cwd(), "data"),
+    path.resolve(process.cwd(), "..", "..", "..", "ETL_V1", "data"),
+  ];
+}
+
+async function resolveDataDir(): Promise<string | null> {
+  for (const candidate of dataDirCandidates()) {
+    try {
+      const stat = await fs.stat(candidate);
+      if (stat.isDirectory()) return candidate;
+    } catch {
+      // Continue with next candidate.
+    }
+  }
+  return null;
 }
 
 async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {
@@ -16,7 +32,12 @@ async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {
 }
 
 export async function GET() {
-  const retefuente = await readJsonFile(rootPath("data", "retefuente_2026.json"), {
+  const dataDir = await resolveDataDir();
+  const retefuenteFile = dataDir ? path.join(dataDir, "retefuente_2026.json") : "";
+  const reteicaFile = dataDir ? path.join(dataDir, "reteica_ciudades.json") : "";
+  const reteivaFile = dataDir ? path.join(dataDir, "reteiva_config.json") : "";
+
+  const retefuente = await readJsonFile(retefuenteFile, {
     uvt_value_cop: 52374,
     default_rule: {
       concept: "Compras generales declarantes",
@@ -29,7 +50,7 @@ export async function GET() {
     rules: [],
   });
 
-  const reteica = await readJsonFile(rootPath("data", "reteica_ciudades.json"), {
+  const reteica = await readJsonFile(reteicaFile, {
     account_code: "23680101",
     cities: {
       CALI: {
@@ -51,7 +72,7 @@ export async function GET() {
     },
   });
 
-  const reteiva = await readJsonFile(rootPath("data", "reteiva_config.json"), {
+  const reteiva = await readJsonFile(reteivaFile, {
     account_code: "236701",
     fallback_rate: 0.15,
     legal_reference: "Art. 437-1 ET / Decreto 380/1996",
@@ -65,6 +86,32 @@ export async function GET() {
     retefuente,
     reteica,
     reteiva,
-    source: "project-data",
+    source: dataDir ? "project-data" : "fallback-defaults",
   });
+}
+
+export async function POST(request: Request) {
+  const dataDir = await resolveDataDir();
+  if (!dataDir) {
+    return NextResponse.json({ detail: "No se encontro el directorio data del proyecto" }, { status: 500 });
+  }
+
+  const payload = (await request.json()) as {
+    retefuente?: unknown;
+    reteica?: unknown;
+    reteiva?: unknown;
+  };
+
+  if (!payload.retefuente || !payload.reteica || !payload.reteiva) {
+    return NextResponse.json({ detail: "Se requieren retefuente, reteica y reteiva" }, { status: 400 });
+  }
+
+  try {
+    await fs.writeFile(path.join(dataDir, "retefuente_2026.json"), JSON.stringify(payload.retefuente, null, 2), "utf-8");
+    await fs.writeFile(path.join(dataDir, "reteica_ciudades.json"), JSON.stringify(payload.reteica, null, 2), "utf-8");
+    await fs.writeFile(path.join(dataDir, "reteiva_config.json"), JSON.stringify(payload.reteiva, null, 2), "utf-8");
+    return NextResponse.json({ ok: true, source: "project-data" });
+  } catch {
+    return NextResponse.json({ detail: "No fue posible escribir archivos de configuracion" }, { status: 500 });
+  }
 }

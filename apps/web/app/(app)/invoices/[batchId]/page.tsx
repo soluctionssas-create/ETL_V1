@@ -7,6 +7,8 @@ import {
   Button,
   Card,
   CardContent,
+  Divider,
+  Drawer,
   Chip,
   Grid,
   MenuItem,
@@ -16,6 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 import UploadRounded from "@mui/icons-material/UploadRounded";
+import VisibilityRounded from "@mui/icons-material/VisibilityRounded";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useParams } from "next/navigation";
 import { getBatch, listBatchInvoices, triggerExport, type Batch, type Invoice } from "@/lib/api";
@@ -38,6 +41,7 @@ export default function BatchDetailPage() {
   const [exporting, setExporting] = useState(false);
   const [erp, setErp] = useState("siigo");
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -91,7 +95,74 @@ export default function BatchDetailPage() {
       minWidth: 120,
       renderCell: (params) => <Chip size="small" label={params.value} color={statusColor[params.value] ?? "default"} />,
     },
+    {
+      field: "actions",
+      headerName: "Abrir",
+      width: 120,
+      sortable: false,
+      renderCell: (params) => (
+        <Button size="small" startIcon={<VisibilityRounded fontSize="small" />} onClick={() => setSelectedInvoice(params.row)}>
+          Abrir
+        </Button>
+      ),
+    },
   ], []);
+
+  function formatDate(value: string | null | undefined): string {
+    if (!value) return "-";
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? value : d.toLocaleString("es-CO");
+  }
+
+  function formatMoney(value: number | null | undefined, currency: string | null | undefined): string {
+    if (value == null) return "-";
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: currency || "COP",
+      maximumFractionDigits: 2,
+    }).format(value);
+  }
+
+  const detailRows: Array<{ label: string; value: string }> = selectedInvoice
+    ? [
+        { label: "Tipo de documento", value: selectedInvoice.document_type ?? "-" },
+        { label: "CUFE/CUDE", value: selectedInvoice.cufe_cude ?? "-" },
+        { label: "Folio", value: selectedInvoice.folio ?? selectedInvoice.invoice_number ?? "-" },
+        { label: "Prefijo", value: selectedInvoice.prefix ?? "-" },
+        { label: "Divisa", value: selectedInvoice.currency ?? "-" },
+        { label: "Forma de Pago", value: selectedInvoice.payment_form ?? "-" },
+        { label: "Medio de Pago", value: selectedInvoice.payment_method ?? "-" },
+        { label: "Fecha Emision", value: formatDate(selectedInvoice.issue_date) },
+        { label: "Fecha Recepcion", value: formatDate(selectedInvoice.reception_date) },
+        { label: "NIT Emisor", value: selectedInvoice.vendor_tax_id ?? "-" },
+        { label: "Nombre Emisor", value: selectedInvoice.vendor_name ?? "-" },
+        { label: "NIT Receptor", value: selectedInvoice.receiver_tax_id ?? "-" },
+        { label: "Nombre Receptor", value: selectedInvoice.receiver_name ?? "-" },
+        { label: "item_codigo", value: selectedInvoice.item_code ?? "-" },
+        { label: "item_descripcion", value: selectedInvoice.item_description ?? "-" },
+        { label: "cantidad", value: selectedInvoice.quantity != null ? String(selectedInvoice.quantity) : "-" },
+        { label: "precio_unitario", value: formatMoney(selectedInvoice.unit_price, selectedInvoice.currency) },
+        { label: "IVA", value: formatMoney(selectedInvoice.iva, selectedInvoice.currency) },
+        { label: "ICA", value: formatMoney(selectedInvoice.ica, selectedInvoice.currency) },
+        { label: "IC", value: formatMoney(selectedInvoice.ic, selectedInvoice.currency) },
+        { label: "INC", value: formatMoney(selectedInvoice.inc, selectedInvoice.currency) },
+        { label: "Timbre", value: formatMoney(selectedInvoice.timbre, selectedInvoice.currency) },
+        { label: "INC Bolsas", value: formatMoney(selectedInvoice.inc_bolsas, selectedInvoice.currency) },
+        { label: "IN Carbono", value: formatMoney(selectedInvoice.in_carbono, selectedInvoice.currency) },
+        { label: "IN Combustibles", value: formatMoney(selectedInvoice.in_combustibles, selectedInvoice.currency) },
+        { label: "IC Datos", value: formatMoney(selectedInvoice.ic_datos, selectedInvoice.currency) },
+        { label: "ICL", value: formatMoney(selectedInvoice.icl, selectedInvoice.currency) },
+        { label: "INPP", value: formatMoney(selectedInvoice.inpp, selectedInvoice.currency) },
+        { label: "IBUA", value: formatMoney(selectedInvoice.ibua, selectedInvoice.currency) },
+        { label: "ICUI", value: formatMoney(selectedInvoice.icui, selectedInvoice.currency) },
+        { label: "Rete IVA", value: formatMoney(selectedInvoice.rete_iva, selectedInvoice.currency) },
+        { label: "Rete Renta", value: formatMoney(selectedInvoice.rete_renta, selectedInvoice.currency) },
+        { label: "Rete ICA", value: formatMoney(selectedInvoice.rete_ica, selectedInvoice.currency) },
+        { label: "Total", value: formatMoney(selectedInvoice.total_amount, selectedInvoice.currency) },
+        { label: "Estado", value: selectedInvoice.status ?? "-" },
+        { label: "Grupo", value: selectedInvoice.group_name ?? "-" },
+      ]
+    : [];
 
   return (
     <Stack spacing={2}>
@@ -136,6 +207,41 @@ export default function BatchDetailPage() {
       <Paper sx={{ minHeight: 560 }}>
         <DataGrid rows={rows} columns={columns} loading={loading} disableRowSelectionOnClick pageSizeOptions={[20, 50, 100]} />
       </Paper>
+
+      <Drawer anchor="right" open={Boolean(selectedInvoice)} onClose={() => setSelectedInvoice(null)}>
+        <Box sx={{ width: { xs: 360, sm: 540 }, p: 2.5 }}>
+          <Typography variant="h4">Detalle de factura</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {selectedInvoice?.invoice_number ?? "Sin numero"}
+          </Typography>
+
+          <Stack spacing={1}>
+            {detailRows.map((row) => (
+              <Box key={row.label} sx={{ display: "grid", gridTemplateColumns: "190px 1fr", gap: 1 }}>
+                <Typography variant="caption" color="text.secondary">{row.label}</Typography>
+                <Typography variant="body2">{row.value}</Typography>
+              </Box>
+            ))}
+          </Stack>
+
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="caption" color="text.secondary">Raw JSON de respaldo</Typography>
+          <TextField
+            multiline
+            minRows={10}
+            fullWidth
+            value={JSON.stringify(selectedInvoice?.raw_data ?? {}, null, 2)}
+            slotProps={{ input: { readOnly: true } }}
+            sx={{
+              mt: 1,
+              "& .MuiInputBase-inputMultiline": {
+                fontFamily: "Consolas, 'Courier New', monospace",
+                fontSize: 12,
+              },
+            }}
+          />
+        </Box>
+      </Drawer>
     </Stack>
   );
 }
