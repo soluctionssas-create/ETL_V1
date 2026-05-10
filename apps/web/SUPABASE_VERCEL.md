@@ -4,10 +4,17 @@
 
 Configura estas variables en el proyecto de Vercel (Environment Variables):
 
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+
+Puedes copiar los nombres desde `apps/web/.env.example`.
+
+Opcionales, solo si vas a usar Supabase directamente en componentes cliente:
+
 - NEXT_PUBLIC_SUPABASE_URL
 - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
-Puedes copiar los nombres desde `apps/web/.env.example`.
+No uses `SUPABASE_SERVICE_ROLE_KEY` en frontend ni en variables `NEXT_PUBLIC_*`.
 
 ## 2) Preparar tabla y políticas en Supabase
 
@@ -35,3 +42,5 @@ Esto crea `public.todos` y políticas RLS para una demo funcional inmediata.
 
 Las políticas del archivo `setup.sql` son abiertas para acelerar validación.
 Antes de pasar a productivo real, restringe políticas por usuario o tenant.
+
+Si alguna llave real estuvo en git o logs, rota las credenciales en Supabase Dashboard.
