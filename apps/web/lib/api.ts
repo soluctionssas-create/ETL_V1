@@ -3,7 +3,7 @@
  * Adjunta automáticamente el Authorization header y maneja errores 401.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 type FetchOptions = RequestInit & { params?: Record<string, string | number | undefined> };
 
@@ -51,8 +51,9 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3010";
     url = new URL(`/api${path}`, baseUrl);
   } else {
-    // For other endpoints, use API_BASE
-    url = new URL(`${API_BASE}${path}`);
+    // For other endpoints, use API_BASE (external URL or internal /api/v1)
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3010";
+    url = new URL(`${API_BASE}${path}`, baseUrl);
   }
 
   if (params) {
