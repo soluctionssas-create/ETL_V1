@@ -7,6 +7,37 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v
 
 type FetchOptions = RequestInit & { params?: Record<string, string | number | undefined> };
 
+function extractErrorMessage(body: unknown, status: number): string {
+  if (typeof body === "string") return body;
+  if (body && typeof body === "object") {
+    const detail = (body as { detail?: unknown }).detail;
+    const message = (body as { message?: unknown }).message;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) {
+      return detail
+        .map((item) => (typeof item === "string" ? item : JSON.stringify(item)))
+        .join(" | ");
+    }
+    if (detail && typeof detail === "object") return JSON.stringify(detail);
+    if (typeof message === "string") return message;
+  }
+  return `HTTP ${status}`;
+}
+
+function readTenantFromToken(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+    const parsed = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))) as {
+      tenant_id?: string;
+    };
+    return parsed.tenant_id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
   const { params, ...fetchOpts } = options;
 
@@ -18,11 +49,17 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
   }
 
   const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const tenant =
+    typeof window !== "undefined"
+      ? localStorage.getItem("active_tenant") ?? readTenantFromToken(token)
+      : null;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(fetchOpts.headers as Record<string, string>),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (tenant) headers["X-Tenant-Id"] = tenant;
+  headers["X-Correlation-Id"] = crypto.randomUUID();
 
   const res = await fetch(url.toString(), { ...fetchOpts, headers });
 
@@ -36,7 +73,7 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body?.detail ?? `HTTP ${res.status}`);
+    throw new Error(extractErrorMessage(body, res.status));
   }
 
   if (res.status === 204) return undefined as unknown as T;
@@ -51,10 +88,25 @@ export interface TokenResponse {
   expires_in: number;
 }
 
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  full_name: string;
+  tenant_slug: string;
+  tenant_name: string;
+}
+
 export async function login(email: string, password: string): Promise<TokenResponse> {
   return apiFetch<TokenResponse>("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function register(payload: RegisterPayload) {
+  return apiFetch<{ id: string; email: string; full_name: string; role: string; tenant_id: string }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 

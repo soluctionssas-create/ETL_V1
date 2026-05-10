@@ -11,7 +11,10 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///./etl_dev.db")
 os.environ.setdefault("ENVIRONMENT", "development")
 os.environ.setdefault("DEBUG", "true")
 os.environ.setdefault("JWT_SECRET", "dev-secret-key-for-local-testing-only-min-32-chars-ok")
-os.environ.setdefault("CORS_ORIGINS", '["http://localhost:3000","http://127.0.0.1:3000","http://localhost:8001"]')
+os.environ.setdefault(
+    "CORS_ORIGINS",
+    '["http://localhost:3000","http://127.0.0.1:3000","http://localhost:3010","http://127.0.0.1:3010","http://localhost:8001"]',
+)
 os.environ.setdefault("RATE_LIMIT_REQUESTS", "1000")
 os.environ.setdefault("MAX_UPLOAD_SIZE_MB", "50")
 
