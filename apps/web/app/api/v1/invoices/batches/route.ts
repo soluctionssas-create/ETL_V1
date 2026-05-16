@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import AdmZip from "adm-zip";
 import { createRequire } from "node:module";
+import {
+  extractDianInvoiceFromXml,
+  extractDianInvoiceFromPdfText,
+  canonicalToFacturaDian,
+  canonicalLinesToDetalles,
+} from "@/lib/dian";
 
 export const runtime = "nodejs";
 
@@ -145,116 +151,63 @@ async function buildInvoiceSeedFromPdf(file: File, batchId: string, invoiceId: s
   const buffer = Buffer.from(await file.arrayBuffer());
   const require = createRequire(import.meta.url);
   const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (data: Buffer) => Promise<{ text?: string }>;
+
+  // ── Nuevo extractor canónico PDF ──────────────────────────────────────────
   const parsed = await pdfParse(buffer);
   const text = parsed.text ?? "";
-  const lines: string[] = text
-    .split(/\r?\n/)
-    .map((line: string) => sanitizeText(line) ?? "")
-    .filter((line: string) => line.length > 2);
-
-  const fullText = lines.join(" \n ");
-  const invoiceNumberMatch = fullText.match(/(?:numero\s*de\s*factura|nro\.?\s*factura|factura\s*(?:no\.?|nro\.?)?)\s*[:#-]?\s*([A-Z0-9-]{4,})/i);
-  const dateIssueMatch = fullText.match(/(?:fecha\s*(?:de)?\s*emisi[oó]n|fecha)\s*[:#-]?\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})/i);
-  const dateDueMatch = fullText.match(/(?:fecha\s*(?:de)?\s*vencimiento|vencimiento)\s*[:#-]?\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})/i);
-  const paymentFormMatch = fullText.match(/forma\s*de\s*pago\s*[:#-]?\s*([A-Z0-9]{1,10})/i);
-  const paymentMethodMatch = fullText.match(/medio\s*de\s*pago\s*[:#-]?\s*([A-Z\s]{3,30})/i);
-  const nitMatches = Array.from(fullText.matchAll(/\b\d{8,12}\b/g)).map((match: RegExpMatchArray) => match[0]);
-
-  const totalLine = lines.find((line: string) => /total\s*(factura|a\s*pagar|documento)?/i.test(line)) ?? "";
-  const totalMoneyMatch = Array.from(totalLine.matchAll(/\b\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})\b|\b\d+(?:,\d{2})\b/g)).map((match: RegExpMatchArray) => match[0]);
-
-  const extractedItems = extractPdfItems(lines, file.name);
-  const finalItems = extractedItems.length > 0
-    ? extractedItems
-    : [
-        {
-          nro: 1,
-          codigo: file.name,
-          descripcion: `Archivo PDF cargado: ${file.name}`,
-          cantidad: 1,
-          precio_unitario: null,
-          impuesto_iva: null,
-          precio_unitario_venta: null,
-        },
-      ];
-
-  const invoiceNumber = sanitizeText(invoiceNumberMatch?.[1] ?? null) ?? `${fileBaseName(file.name).slice(0, 40) || "PDF"}-${batchId.slice(0, 8)}`;
-  const issueDate = parseDateToIso(dateIssueMatch?.[1] ?? null) ?? new Date().toISOString();
-  const dueDate = parseDateToIso(dateDueMatch?.[1] ?? null);
-  const vendorTaxId = nitMatches[0] ?? null;
-  const customerTaxId = nitMatches[1] ?? null;
-  const totalAmount = asNullableNumber(totalMoneyMatch[totalMoneyMatch.length - 1] ?? null);
-  const taxAmount = null;
-
-  const rawData = {
-    origen_extraccion: "pdf_texto_basico",
-    texto_plano: text.slice(0, 15000),
-    datos_documento: {
-      numero_factura: invoiceNumber,
-      fecha_emision: issueDate,
-      fecha_vencimiento: dueDate,
-      forma_pago: sanitizeText(paymentFormMatch?.[1] ?? null) ?? "POR_DEFINIR",
-      medio_pago: sanitizeText(paymentMethodMatch?.[1] ?? null) ?? "NO_IDENTIFICADO",
-    },
-    datos_emisor_vendedor: {
-      razon_social: "Pendiente de extraccion PDF",
-      nit: vendorTaxId,
-    },
-    datos_adquiriente_comprador: {
-      nombre_razon_social: "Pendiente de extraccion PDF",
-      numero_documento: customerTaxId,
-    },
-    totales: {
-      moneda: "COP",
-      subtotal: null,
-      iva: taxAmount,
-      total_factura: totalAmount,
-      total_impuesto: taxAmount,
-    },
-    items: finalItems,
-  } satisfies Record<string, unknown>;
-
+  const canonical = extractDianInvoiceFromPdfText(text, { fileName: file.name });
+  const dianInvoice = canonicalToFacturaDian(canonical, batchId);
+  const dianDetails = canonicalLinesToDetalles(canonical);
+  const invoiceNumber = String(
+    canonical.datos_documento_numero_factura.value ??
+    `${fileBaseName(file.name).slice(0, 40) || "PDF"}-${batchId.slice(0, 8)}`
+  );
   return {
     invoiceId,
     invoice_number: invoiceNumber,
-    vendor_name: "Pendiente de extraccion PDF",
-    vendor_tax_id: vendorTaxId,
-    customer_name: "Pendiente de extraccion PDF",
-    customer_tax_id: customerTaxId,
-    total_amount: totalAmount,
-    tax_amount: taxAmount,
-    currency: "COP",
-    raw_data: rawData,
-    dian_invoice: {
-      batch_id: batchId,
-      doc_numero_factura: invoiceNumber,
-      doc_fecha_emision: issueDate,
-      doc_fecha_vencimiento: dueDate,
-      doc_forma_pago: sanitizeText(paymentFormMatch?.[1] ?? null) ?? "POR_DEFINIR",
-      doc_medio_pago: sanitizeText(paymentMethodMatch?.[1] ?? null) ?? "NO_IDENTIFICADO",
-      emisor_razon_social: "Pendiente de extraccion PDF",
-      emisor_nit: vendorTaxId,
-      adquiriente_nombre_razon_social: "Pendiente de extraccion PDF",
-      adquiriente_numero_documento: customerTaxId,
-      tot_moneda: "COP",
-      tot_total_impuesto: taxAmount,
-      tot_total_factura: totalAmount,
-      estado: extractedItems.length > 0 ? "extraida_pdf" : "pendiente_revision_pdf",
-      json_crudo: rawData,
+    vendor_name: String(canonical.datos_emisor_vendedor_razon_social.value ?? "Pendiente de extraccion PDF"),
+    vendor_tax_id: canonical.datos_emisor_vendedor_nit_emisor.value ?? null,
+    customer_name: String(canonical.datos_adquiriente_comprador_nombre_razon_social.value ?? "Pendiente de extraccion PDF"),
+    customer_tax_id: canonical.datos_adquiriente_comprador_numero_documento.value ?? null,
+    total_amount: canonical.totales_total_factura.value ?? null,
+    tax_amount: canonical.totales_total_impuesto.value ?? null,
+    currency: String(canonical.totales_moneda.value ?? "COP"),
+    raw_data: {
+      origen_extraccion: "pdf_canonical",
+      texto_plano: text.slice(0, 5000),
+      extraction_warnings: canonical.extraction_warnings,
     },
-    dian_details: finalItems.map((item) => ({
-      detalle_nro: item.nro,
-      detalle_codigo: item.codigo,
-      detalle_descripcion: item.descripcion,
-      detalle_cantidad: item.cantidad,
-      detalle_precio_unitario: item.precio_unitario,
-      detalle_impuesto_iva: item.impuesto_iva,
-      detalle_precio_unitario_venta: item.precio_unitario_venta,
-    })),
+    dian_invoice: dianInvoice,
+    dian_details: dianDetails,
   };
 }
 
 function buildInvoiceSeedFromXml(sourceName: string, xml: string, batchId: string, invoiceId: string): InvoiceSeed {
+  // ── Nuevo extractor canónico XML ──────────────────────────────────────────
+  const canonical = extractDianInvoiceFromXml(xml, { fileName: sourceName });
+  const dianInvoice = canonicalToFacturaDian(canonical, batchId);
+  const dianDetails = canonicalLinesToDetalles(canonical);
+  const invoiceNumber = String(
+    canonical.datos_documento_numero_factura.value ??
+    `${fileBaseName(sourceName)}-${batchId.slice(0, 8)}`
+  );
+  return {
+    invoiceId,
+    invoice_number: invoiceNumber,
+    vendor_name: String(canonical.datos_emisor_vendedor_razon_social.value ?? "Proveedor XML"),
+    vendor_tax_id: canonical.datos_emisor_vendedor_nit_emisor.value ?? null,
+    customer_name: String(canonical.datos_adquiriente_comprador_nombre_razon_social.value ?? "Cliente XML"),
+    customer_tax_id: canonical.datos_adquiriente_comprador_numero_documento.value ?? null,
+    total_amount: canonical.totales_total_factura.value ?? null,
+    tax_amount: canonical.totales_total_impuesto.value ?? null,
+    currency: String(canonical.totales_moneda.value ?? "COP"),
+    raw_data: { origen_extraccion: "xml_canonical" },
+    dian_invoice: dianInvoice,
+    dian_details: dianDetails,
+  };
+}
+// ─── Legacy XML helper functions (kept for reference) ────────────────────────
+function _buildInvoiceSeedFromXml_legacy(sourceName: string, xml: string, batchId: string, invoiceId: string): InvoiceSeed {
   const supplierSection = extractXmlSection(xml, ["AccountingSupplierParty", "SupplierParty"]);
   const customerSection = extractXmlSection(xml, ["AccountingCustomerParty", "CustomerParty"]);
   const totalSection = extractXmlSection(xml, ["LegalMonetaryTotal", "RequestedMonetaryTotal"]);

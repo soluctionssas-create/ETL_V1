@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fixture sintético DIAN UBL 2.1 — Factura electrónica FE1789
+  Datos de prueba — NO contiene información real de contribuyentes.
+  Usado exclusivamente por: apps/web/__tests__/dian-extraction.test.ts
+-->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+         xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- ─── Datos del documento ─── -->
+  <cbc:ID>FE1789</cbc:ID>
+  <cbc:IssueDate>2026-03-05</cbc:IssueDate>
+  <cbc:IssueTime>10:30:00-05:00</cbc:IssueTime>
+  <cbc:DueDate>2026-03-12</cbc:DueDate>
+  <cbc:InvoiceTypeCode listID="04">01</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>COP</cbc:DocumentCurrencyCode>
+  <cbc:CustomizationID>04</cbc:CustomizationID>
+
+  <!-- ─── Medio de pago ─── -->
+  <cac:PaymentMeans>
+    <cbc:ID>2</cbc:ID>
+    <cbc:PaymentMeansCode>47</cbc:PaymentMeansCode>
+    <cbc:PaymentDueDate>2026-03-12</cbc:PaymentDueDate>
+  </cac:PaymentMeans>
+
+  <!-- ─── Emisor / Proveedor ─── -->
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyName>
+        <cbc:Name>TRANSPORTES FENIX S.A.</cbc:Name>
+      </cac:PartyName>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID schemeID="31">805023122</cbc:CompanyID>
+        <cbc:TaxLevelCode>O-13</cbc:TaxLevelCode>
+        <cac:TaxScheme>
+          <cbc:ID>ZZ</cbc:ID>
+          <cbc:Name>No aplica</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>TRANSPORTES FENIX S.A.</cbc:RegistrationName>
+        <cbc:CompanyID schemeID="31">805023122</cbc:CompanyID>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Telephone>+57 310 555 1234</cbc:Telephone>
+        <cbc:ElectronicMail>facturacion@tfenix.co</cbc:ElectronicMail>
+      </cac:Contact>
+      <cac:IndustryClassificationCode>4923</cac:IndustryClassificationCode>
+      <cac:PostalAddress>
+        <cbc:CountrySubentity>Valle del Cauca</cbc:CountrySubentity>
+        <cbc:CityName>Cali</cbc:CityName>
+        <cbc:AddressLine>
+          <cbc:Line>Calle 15 # 25-40</cbc:Line>
+        </cbc:AddressLine>
+        <cac:Country>
+          <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+        </cac:Country>
+      </cac:PostalAddress>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+
+  <!-- ─── Adquiriente / Comprador ─── -->
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyName>
+        <cbc:Name>FRUITT COL S.A.S.</cbc:Name>
+      </cac:PartyName>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID schemeID="31">901814874</cbc:CompanyID>
+        <cbc:TaxLevelCode>R-99-PN</cbc:TaxLevelCode>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>FRUITT COL S.A.S.</cbc:RegistrationName>
+        <cbc:CompanyID schemeID="31">901814874</cbc:CompanyID>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+
+  <!-- ─── Impuesto total (IVA = 0) ─── -->
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="COP">3800000.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:Percent>0.00</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+
+  <!-- ─── Totales monetarios ─── -->
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="COP">3800000.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="COP">3800000.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="COP">3800000.00</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="COP">3800000.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+
+  <!-- ─── Línea de detalle ─── -->
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="WSD">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">3800000.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">3800000.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>0.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>SERVICIO DE TRANSPORTE TERRESTRE</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>TRANSP-001</cbc:ID>
+      </cac:SellersItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">3800000.00</cbc:PriceAmount>
+    </cac:Price>
+  </cac:InvoiceLine>
+
+</Invoice>
