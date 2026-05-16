@@ -75,6 +75,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }
 
+  function closeMobileDrawer() {
+    if (typeof document !== "undefined") {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) {
+        active.blur();
+      }
+    }
+    setMobileOpen(false);
+  }
+
   const drawerContent = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <Box sx={{ px: 2.5, py: 2.5 }}>
@@ -91,7 +101,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               component={Link}
               href={item.href}
               selected={selected}
-              onClick={() => setMobileOpen(false)}
+              onClick={closeMobileDrawer}
               sx={{
                 borderRadius: 2,
                 mb: 0.5,
@@ -198,7 +208,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Drawer
           variant="temporary"
           open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
+          onClose={closeMobileDrawer}
           ModalProps={{ keepMounted: true, disableRestoreFocus: true, disableAutoFocus: true }}
           sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: drawerWidth } }}
         >

@@ -15,6 +15,11 @@ import {
   Paper,
   Select,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
@@ -22,7 +27,7 @@ import UploadRounded from "@mui/icons-material/UploadRounded";
 import VisibilityRounded from "@mui/icons-material/VisibilityRounded";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useParams } from "next/navigation";
-import { getBatch, listBatchInvoices, triggerExport, type Batch, type Invoice } from "@/lib/api";
+import { getBatch, listBatchInvoices, triggerExport, type Batch, type Invoice, type InvoiceItem } from "@/lib/api";
 
 const statusColor: Record<string, "default" | "info" | "success" | "error" | "warning"> = {
   raw: "default",
@@ -126,23 +131,20 @@ export default function BatchDetailPage() {
 
   const detailRows: Array<{ label: string; value: string }> = selectedInvoice
     ? [
-        { label: "Tipo de documento", value: selectedInvoice.document_type ?? "-" },
+        { label: "Tipo de documento", value: selectedInvoice.doc_tipo_operacion ?? selectedInvoice.document_type ?? "-" },
         { label: "CUFE/CUDE", value: selectedInvoice.cufe_cude ?? "-" },
-        { label: "Folio", value: selectedInvoice.folio ?? selectedInvoice.invoice_number ?? "-" },
+        { label: "Numero de factura", value: selectedInvoice.doc_numero_factura ?? selectedInvoice.folio ?? selectedInvoice.invoice_number ?? "-" },
         { label: "Prefijo", value: selectedInvoice.prefix ?? "-" },
         { label: "Divisa", value: selectedInvoice.currency ?? "-" },
-        { label: "Forma de Pago", value: selectedInvoice.payment_form ?? "-" },
-        { label: "Medio de Pago", value: selectedInvoice.payment_method ?? "-" },
-        { label: "Fecha Emision", value: formatDate(selectedInvoice.issue_date) },
+        { label: "Forma de pago", value: selectedInvoice.doc_forma_pago ?? selectedInvoice.payment_form ?? "-" },
+        { label: "Medio de pago", value: selectedInvoice.doc_medio_pago ?? selectedInvoice.payment_method ?? "-" },
+        { label: "Fecha emision", value: formatDate(selectedInvoice.doc_fecha_emision ?? selectedInvoice.issue_date) },
+        { label: "Fecha vencimiento", value: formatDate(selectedInvoice.doc_fecha_vencimiento) },
         { label: "Fecha Recepcion", value: formatDate(selectedInvoice.reception_date) },
-        { label: "NIT Emisor", value: selectedInvoice.vendor_tax_id ?? "-" },
-        { label: "Nombre Emisor", value: selectedInvoice.vendor_name ?? "-" },
-        { label: "NIT Receptor", value: selectedInvoice.receiver_tax_id ?? "-" },
-        { label: "Nombre Receptor", value: selectedInvoice.receiver_name ?? "-" },
-        { label: "item_codigo", value: selectedInvoice.item_code ?? "-" },
-        { label: "item_descripcion", value: selectedInvoice.item_description ?? "-" },
-        { label: "cantidad", value: selectedInvoice.quantity != null ? String(selectedInvoice.quantity) : "-" },
-        { label: "precio_unitario", value: formatMoney(selectedInvoice.unit_price, selectedInvoice.currency) },
+        { label: "NIT emisor", value: selectedInvoice.emisor_nit ?? selectedInvoice.vendor_tax_id ?? "-" },
+        { label: "Nombre emisor", value: selectedInvoice.emisor_razon_social ?? selectedInvoice.vendor_name ?? "-" },
+        { label: "NIT adquiriente", value: selectedInvoice.adquiriente_numero_documento ?? selectedInvoice.receiver_tax_id ?? "-" },
+        { label: "Nombre adquiriente", value: selectedInvoice.adquiriente_nombre_razon_social ?? selectedInvoice.receiver_name ?? "-" },
         { label: "IVA", value: formatMoney(selectedInvoice.iva, selectedInvoice.currency) },
         { label: "ICA", value: formatMoney(selectedInvoice.ica, selectedInvoice.currency) },
         { label: "IC", value: formatMoney(selectedInvoice.ic, selectedInvoice.currency) },
@@ -156,13 +158,29 @@ export default function BatchDetailPage() {
         { label: "INPP", value: formatMoney(selectedInvoice.inpp, selectedInvoice.currency) },
         { label: "IBUA", value: formatMoney(selectedInvoice.ibua, selectedInvoice.currency) },
         { label: "ICUI", value: formatMoney(selectedInvoice.icui, selectedInvoice.currency) },
-        { label: "Rete IVA", value: formatMoney(selectedInvoice.rete_iva, selectedInvoice.currency) },
-        { label: "Rete Renta", value: formatMoney(selectedInvoice.rete_renta, selectedInvoice.currency) },
-        { label: "Rete ICA", value: formatMoney(selectedInvoice.rete_ica, selectedInvoice.currency) },
-        { label: "Total", value: formatMoney(selectedInvoice.total_amount, selectedInvoice.currency) },
+        { label: "Rete IVA", value: formatMoney(selectedInvoice.tot_rete_iva ?? selectedInvoice.rete_iva, selectedInvoice.currency) },
+        { label: "Rete Fuente", value: formatMoney(selectedInvoice.tot_rete_fuente ?? selectedInvoice.rete_renta, selectedInvoice.currency) },
+        { label: "Rete ICA", value: formatMoney(selectedInvoice.tot_rete_ica ?? selectedInvoice.rete_ica, selectedInvoice.currency) },
+        { label: "Total factura", value: formatMoney(selectedInvoice.tot_total_factura ?? selectedInvoice.total_amount, selectedInvoice.currency) },
         { label: "Estado", value: selectedInvoice.status ?? "-" },
         { label: "Grupo", value: selectedInvoice.group_name ?? "-" },
       ]
+    : [];
+
+  const selectedInvoiceItems: InvoiceItem[] = selectedInvoice
+    ? (selectedInvoice.items && selectedInvoice.items.length > 0
+        ? selectedInvoice.items
+        : [
+            {
+              line_number: selectedInvoice.detalle_nro ?? "1",
+              item_code: selectedInvoice.detalle_codigo ?? selectedInvoice.item_code,
+              item_description: selectedInvoice.detalle_descripcion ?? selectedInvoice.item_description,
+              quantity: selectedInvoice.detalle_cantidad ?? selectedInvoice.quantity,
+              unit_price: selectedInvoice.detalle_precio_unitario ?? selectedInvoice.unit_price,
+              tax_iva: selectedInvoice.detalle_impuesto_iva,
+              sale_unit_price: selectedInvoice.detalle_precio_unitario_venta,
+            },
+          ])
     : [];
 
   return (
@@ -224,6 +242,37 @@ export default function BatchDetailPage() {
               </Box>
             ))}
           </Stack>
+
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>Items ({selectedInvoiceItems.length})</Typography>
+          <Paper variant="outlined" sx={{ overflow: "auto" }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Codigo</TableCell>
+                  <TableCell>Descripcion</TableCell>
+                  <TableCell align="right">Cantidad</TableCell>
+                  <TableCell align="right">Precio unitario</TableCell>
+                  <TableCell align="right">IVA</TableCell>
+                  <TableCell align="right">Precio venta</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {selectedInvoiceItems.map((item, index) => (
+                  <TableRow key={`${item.line_number ?? index}-${item.item_code ?? "item"}`}>
+                    <TableCell>{item.line_number ?? index + 1}</TableCell>
+                    <TableCell>{item.item_code ?? "-"}</TableCell>
+                    <TableCell>{item.item_description ?? "-"}</TableCell>
+                    <TableCell align="right">{item.quantity != null ? String(item.quantity) : "-"}</TableCell>
+                    <TableCell align="right">{formatMoney(item.unit_price, selectedInvoice?.currency)}</TableCell>
+                    <TableCell align="right">{formatMoney(item.tax_iva, selectedInvoice?.currency)}</TableCell>
+                    <TableCell align="right">{formatMoney(item.sale_unit_price, selectedInvoice?.currency)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
 
           <Divider sx={{ my: 2 }} />
           <Typography variant="caption" color="text.secondary">Raw JSON de respaldo</Typography>

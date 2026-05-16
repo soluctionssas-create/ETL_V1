@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import uuid
 from pathlib import Path
 from typing import Any
@@ -14,8 +15,40 @@ logger = logging.getLogger(__name__)
 
 UVT_2026_COP = 52374
 RETEIVA_FALLBACK_RATE = 0.15
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DATA_DIR = PROJECT_ROOT / "data"
+
+# Resolución de DATA_DIR:
+# 1. Si la variable de entorno DATA_DIR está definida, se usa directamente.
+# 2. Si no está definida, se calcula relativo al archivo (funciona en local donde
+#    la ruta es ETL_V1/apps/worker/worker/tasks.py → parents[3] = ETL_V1/).
+# 3. En Docker la ruta es /app/worker/tasks.py (solo 3 niveles), por lo que
+#    parents[3] causaría IndexError. Usar DATA_DIR env var en Docker.
+_DATA_DIR_FROM_ENV = os.environ.get("DATA_DIR")
+if _DATA_DIR_FROM_ENV:
+    DATA_DIR = Path(_DATA_DIR_FROM_ENV)
+else:
+    _this_file = Path(__file__).resolve()
+    _parents = _this_file.parents
+    # parents[3] funciona en local (ETL_V1/apps/worker/worker/tasks.py).
+    # En Docker establece DATA_DIR env var en lugar de depender de esta lógica.
+    try:
+        DATA_DIR = _parents[3] / "data"
+    except IndexError:
+        DATA_DIR = _this_file.parent / "data"
+        logger.warning(
+            "DATA_DIR no pudo calcularse desde la ruta del archivo. "
+            "Define la variable de entorno DATA_DIR apuntando al directorio 'data/' del repositorio. "
+            "Usando fallback: %s",
+            DATA_DIR,
+        )
+
+if not DATA_DIR.is_dir():
+    logger.warning(
+        "El directorio DATA_DIR no existe: %s. "
+        "Las configuraciones tributarias no se cargarán correctamente. "
+        "Define DATA_DIR como variable de entorno con la ruta absoluta al directorio 'data/'.",
+        DATA_DIR,
+    )
+
 RETEFUENTE_CONFIG_PATH = DATA_DIR / "retefuente_2026.json"
 RETEICA_CITIES_CONFIG_PATH = DATA_DIR / "reteica_ciudades.json"
 RETEICA_CALI_LEGACY_PATH = DATA_DIR / "reteica_cali.json"

@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,6 +38,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://localhost:3010",
         "http://127.0.0.1:3010",
+        "https://etl-v1.vercel.app",
     ]
 
     # Rate limiting
@@ -53,6 +54,16 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        _placeholder = "change-this-super-secret-key-in-production"
+        if self.environment == "production" and self.jwt_secret == _placeholder:
+            raise ValueError(
+                "JWT_SECRET must be set to a secure random value in production. "
+                "The default placeholder is not allowed when environment='production'."
+            )
+        return self
 
 
 @lru_cache

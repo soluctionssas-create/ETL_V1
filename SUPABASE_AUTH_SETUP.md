@@ -114,6 +114,18 @@ CREATE INDEX IF NOT EXISTS idx_invoices_tenant_id ON invoices(tenant_id);
 
 ✅ **Resultado esperado:** Sin errores. Las tablas `tenants`, `users` e `invoices` creadas.
 
+> ⚠️ **Siguiente paso obligatorio:** Ejecutar `database/supabase_core_app_tables.sql` en SQL Editor.
+> Ese archivo crea la tabla `public.batches` y completa las columnas faltantes de `invoices`
+> (`batch_id`, `vendor_name`, `vendor_tax_id`, `total_amount`, `tax_amount`, `status`).
+> Sin ese paso, el despliegue en Vercel fallará silenciosamente al procesar facturas.
+>
+> Orden completo de ejecución SQL:
+> 1. `SUPABASE_AUTH_SETUP.md` (este archivo) — tenants, users, invoices base
+> 2. `database/supabase_core_app_tables.sql` — batches + completar invoices
+> 3. `database/supabase_facturacion_dian_es.sql` — facturas_dian, detalle + parches
+> 4. `database/supabase_batches_tenant_migration.sql` — batches.tenant_id
+> 5. `database/supabase_rls_policies.sql` — auth.get_tenant_id() + RLS
+
 ---
 
 ## 🔑 Paso 2: Obtener SUPABASE_SERVICE_ROLE_KEY

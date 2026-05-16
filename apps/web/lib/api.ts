@@ -187,6 +187,22 @@ export async function uploadBatch(files: File[]): Promise<Batch[]> {
 }
 
 // ── Invoices ──────────────────────────────────────────────────────────────────
+export interface InvoiceItem {
+  line_number?: string | null;
+  item_code?: string | null;
+  item_description?: string | null;
+  unit?: string | null;
+  quantity?: number | null;
+  unit_price?: number | null;
+  discount?: number | null;
+  surcharge?: number | null;
+  tax_iva?: number | null;
+  tax_iva_rate?: number | null;
+  tax_inc?: number | null;
+  tax_inc_rate?: number | null;
+  sale_unit_price?: number | null;
+}
+
 export interface Invoice {
   id: string;
   batch_id: string;
@@ -227,6 +243,73 @@ export interface Invoice {
   rete_renta?: number | null;
   rete_ica?: number | null;
   group_name?: string | null;
+
+  // Alias en espanol para facilitar integracion funcional.
+  doc_numero_factura?: string | null;
+  doc_fecha_emision?: string | null;
+  doc_fecha_vencimiento?: string | null;
+  doc_tipo_operacion?: string | null;
+  doc_forma_pago?: string | null;
+  doc_medio_pago?: string | null;
+  doc_orden_pedido?: string | null;
+  doc_fecha_orden_pedido?: string | null;
+  emisor_razon_social?: string | null;
+  emisor_nombre_comercial?: string | null;
+  emisor_nit?: string | null;
+  emisor_tipo_contribuyente?: string | null;
+  emisor_regimen_fiscal?: string | null;
+  emisor_responsabilidad_tributaria?: string | null;
+  emisor_actividad_economica?: string | null;
+  emisor_pais?: string | null;
+  emisor_departamento?: string | null;
+  emisor_ciudad?: string | null;
+  emisor_direccion?: string | null;
+  emisor_telefono?: string | null;
+  emisor_correo?: string | null;
+  adquiriente_nombre_razon_social?: string | null;
+  adquiriente_tipo_documento?: string | null;
+  adquiriente_numero_documento?: string | null;
+  adquiriente_tipo_contribuyente?: string | null;
+  adquiriente_regimen_fiscal?: string | null;
+  adquiriente_responsabilidad_tributaria?: string | null;
+  adquiriente_pais?: string | null;
+  adquiriente_departamento?: string | null;
+  adquiriente_ciudad?: string | null;
+  adquiriente_direccion?: string | null;
+  adquiriente_telefono?: string | null;
+  adquiriente_correo?: string | null;
+  detalle_nro?: string | null;
+  detalle_codigo?: string | null;
+  detalle_descripcion?: string | null;
+  detalle_um?: string | null;
+  detalle_cantidad?: number | null;
+  detalle_precio_unitario?: number | null;
+  detalle_descuento?: number | null;
+  detalle_recargo?: number | null;
+  detalle_impuesto_iva?: number | null;
+  detalle_porcentaje_iva?: number | null;
+  detalle_impuesto_inc?: number | null;
+  detalle_porcentaje_inc?: number | null;
+  detalle_precio_unitario_venta?: number | null;
+  tot_moneda?: string | null;
+  tot_subtotal?: number | null;
+  tot_descuento_detalle?: number | null;
+  tot_recargo_detalle?: number | null;
+  tot_total_bruto_factura?: number | null;
+  tot_iva?: number | null;
+  tot_inc?: number | null;
+  tot_bolsas?: number | null;
+  tot_otros_impuestos?: number | null;
+  tot_total_impuesto?: number | null;
+  tot_total_neto_factura?: number | null;
+  tot_descuento_global?: number | null;
+  tot_recargo_global?: number | null;
+  tot_total_factura?: number | null;
+  tot_anticipos?: number | null;
+  tot_rete_fuente?: number | null;
+  tot_rete_iva?: number | null;
+  tot_rete_ica?: number | null;
+  items?: InvoiceItem[];
   raw_data?: Record<string, unknown> | null;
   status: string;
 }
