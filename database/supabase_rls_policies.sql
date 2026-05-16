@@ -11,7 +11,7 @@
 -- Consulta la tabla users para obtener el tenant_id del JWT uid actual.
 -- Marcada SECURITY DEFINER para que pueda leer users sin exponer la tabla.
 -- =============================================================================
-CREATE OR REPLACE FUNCTION auth.get_tenant_id()
+CREATE OR REPLACE FUNCTION public.get_tenant_id()
 RETURNS uuid
 LANGUAGE sql
 STABLE
@@ -25,8 +25,8 @@ AS $$
 $$;
 
 -- Revocar acceso público directo a la función (solo la usa RLS internamente)
-REVOKE EXECUTE ON FUNCTION auth.get_tenant_id() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION auth.get_tenant_id() TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.get_tenant_id() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_tenant_id() TO authenticated;
 
 
 -- =============================================================================
@@ -50,7 +50,7 @@ CREATE POLICY "batches_select_own_tenant"
   ON public.batches
   FOR SELECT
   TO authenticated
-  USING (tenant_id = auth.get_tenant_id());
+  USING (tenant_id = public.get_tenant_id());
 
 -- INSERT: solo puede insertar batches para su propio tenant
 DROP POLICY IF EXISTS "batches_insert_own_tenant" ON public.batches;
@@ -58,7 +58,7 @@ CREATE POLICY "batches_insert_own_tenant"
   ON public.batches
   FOR INSERT
   TO authenticated
-  WITH CHECK (tenant_id = auth.get_tenant_id());
+  WITH CHECK (tenant_id = public.get_tenant_id());
 
 -- UPDATE: solo puede actualizar batches de su propio tenant
 DROP POLICY IF EXISTS "batches_update_own_tenant" ON public.batches;
@@ -66,8 +66,8 @@ CREATE POLICY "batches_update_own_tenant"
   ON public.batches
   FOR UPDATE
   TO authenticated
-  USING (tenant_id = auth.get_tenant_id())
-  WITH CHECK (tenant_id = auth.get_tenant_id());
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
 
 -- DELETE: bloqueado para authenticated (sin policy DELETE → acceso denegado)
 -- service_role puede eliminar desde el backend si es necesario.
@@ -86,7 +86,7 @@ CREATE POLICY "invoices_select_own_tenant"
   ON public.invoices
   FOR SELECT
   TO authenticated
-  USING (tenant_id = auth.get_tenant_id());
+  USING (tenant_id = public.get_tenant_id());
 
 -- INSERT: solo puede insertar para su propio tenant
 DROP POLICY IF EXISTS "invoices_insert_own_tenant" ON public.invoices;
@@ -94,7 +94,7 @@ CREATE POLICY "invoices_insert_own_tenant"
   ON public.invoices
   FOR INSERT
   TO authenticated
-  WITH CHECK (tenant_id = auth.get_tenant_id());
+  WITH CHECK (tenant_id = public.get_tenant_id());
 
 -- UPDATE: solo puede actualizar registros de su propio tenant
 DROP POLICY IF EXISTS "invoices_update_own_tenant" ON public.invoices;
@@ -102,12 +102,12 @@ CREATE POLICY "invoices_update_own_tenant"
   ON public.invoices
   FOR UPDATE
   TO authenticated
-  USING (tenant_id = auth.get_tenant_id())
-  WITH CHECK (tenant_id = auth.get_tenant_id());
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
 
 -- DELETE: no se permite borrado directo desde el cliente (soft-delete via backend)
 -- Si necesitas habilitarlo, reemplaza la línea USING por:
---   USING (tenant_id = auth.get_tenant_id())
+--   USING (tenant_id = public.get_tenant_id())
 DROP POLICY IF EXISTS "invoices_delete_blocked" ON public.invoices;
 -- (DELETE bloqueado implícitamente al no existir policy DELETE para authenticated)
 
@@ -125,7 +125,7 @@ CREATE POLICY "facturas_dian_select_own_tenant"
   ON public.facturas_dian
   FOR SELECT
   TO authenticated
-  USING (tenant_id = auth.get_tenant_id());
+  USING (tenant_id = public.get_tenant_id());
 
 -- INSERT
 DROP POLICY IF EXISTS "facturas_dian_insert_own_tenant" ON public.facturas_dian;
@@ -133,7 +133,7 @@ CREATE POLICY "facturas_dian_insert_own_tenant"
   ON public.facturas_dian
   FOR INSERT
   TO authenticated
-  WITH CHECK (tenant_id = auth.get_tenant_id());
+  WITH CHECK (tenant_id = public.get_tenant_id());
 
 -- UPDATE
 DROP POLICY IF EXISTS "facturas_dian_update_own_tenant" ON public.facturas_dian;
@@ -141,8 +141,8 @@ CREATE POLICY "facturas_dian_update_own_tenant"
   ON public.facturas_dian
   FOR UPDATE
   TO authenticated
-  USING (tenant_id = auth.get_tenant_id())
-  WITH CHECK (tenant_id = auth.get_tenant_id());
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
 
 -- DELETE: bloqueado para authenticated (usar service_role desde backend)
 
@@ -165,7 +165,7 @@ CREATE POLICY "facturas_dian_detalle_select_own_tenant"
       SELECT 1
       FROM public.facturas_dian fd
       WHERE fd.id = facturas_dian_detalle.factura_id
-        AND fd.tenant_id = auth.get_tenant_id()
+        AND fd.tenant_id = public.get_tenant_id()
     )
   );
 
@@ -180,7 +180,7 @@ CREATE POLICY "facturas_dian_detalle_insert_own_tenant"
       SELECT 1
       FROM public.facturas_dian fd
       WHERE fd.id = facturas_dian_detalle.factura_id
-        AND fd.tenant_id = auth.get_tenant_id()
+        AND fd.tenant_id = public.get_tenant_id()
     )
   );
 
@@ -195,7 +195,7 @@ CREATE POLICY "facturas_dian_detalle_update_own_tenant"
       SELECT 1
       FROM public.facturas_dian fd
       WHERE fd.id = facturas_dian_detalle.factura_id
-        AND fd.tenant_id = auth.get_tenant_id()
+        AND fd.tenant_id = public.get_tenant_id()
     )
   )
   WITH CHECK (
@@ -203,7 +203,7 @@ CREATE POLICY "facturas_dian_detalle_update_own_tenant"
       SELECT 1
       FROM public.facturas_dian fd
       WHERE fd.id = facturas_dian_detalle.factura_id
-        AND fd.tenant_id = auth.get_tenant_id()
+        AND fd.tenant_id = public.get_tenant_id()
     )
   );
 
