@@ -351,6 +351,202 @@ export async function listBatchInvoices(batchId: string, page = 1, pageSize = 50
   });
 }
 
+// ── Tax Calculations ──────────────────────────────────────────────────────────
+
+/** Línea individual clasificada por el motor tributario */
+export interface ClassifiedLine {
+  line_id: string;
+  source_line_number: number;
+  description: string;
+  code?: string | null;
+  quantity: number;
+  line_base: number;
+  iva_amount: number;
+  iva_rate: number;
+  inc_amount: number;
+  kind: "purchase" | "service" | "mixed" | "unknown";
+  retefuente_concept?: string;
+  retefuente_account?: string;
+  reteica_city?: string;
+  reteica_kind?: "service" | "purchase";
+  confidence: number;
+  reasons: string[];
+  requires_review: boolean;
+}
+
+/** Grupo de base tributaria calculado por el motor */
+export interface TaxBaseGroup {
+  tax_type: "retefuente" | "reteica" | "reteiva";
+  group_key: string;
+  concept: string;
+  account_code: string;
+  legal_reference?: string;
+  base: number;
+  threshold_base: number;
+  rate: number;
+  calculated_amount: number;
+  applies: boolean;
+  reasons: string[];
+}
+
+/** Clasificación manual guardada dentro de result_json */
+export interface ManualClassification {
+  cost_or_expense?: string;
+  account_code?: string;
+  payable_account_code?: string;
+  retefuente_concept?: string;
+  reteica_city?: string;
+  reteica_kind?: string;
+  applied_at?: string;
+  reason?: string;
+}
+
+/** Contenido de invoice_tax_calculations.result_json */
+export interface TaxCalculationResult {
+  invoice_number?: string;
+  supplier_nit?: string;
+  supplier_name?: string;
+  classified_lines?: ClassifiedLine[];
+  groups?: TaxBaseGroup[];
+  totals?: { retefuente: number; reteica: number; reteiva: number };
+  reported_withholdings?: { retefuente: number; reteica: number; reteiva: number };
+  differences?: { retefuente: number; reteica: number; reteiva: number };
+  requires_review?: boolean;
+  warnings?: string[];
+  manual_classification?: ManualClassification;
+}
+
+/** Fila de la tabla invoice_tax_calculations */
+export interface TaxCalculation {
+  id: string;
+  invoice_id: string;
+  factura_dian_id?: string | null;
+  invoice_number: string | null;
+  supplier_nit: string | null;
+  supplier_name: string | null;
+  buyer_nit: string | null;
+  buyer_name: string | null;
+  city: string | null;
+  subtotal: number | null;
+  iva_total: number | null;
+  inc_total: number | null;
+  total_invoice: number | null;
+  retefuente_calculated: number | null;
+  reteica_calculated: number | null;
+  reteiva_calculated: number | null;
+  retefuente_reported: number | null;
+  reteica_reported: number | null;
+  reteiva_reported: number | null;
+  retefuente_difference: number | null;
+  reteica_difference: number | null;
+  reteiva_difference: number | null;
+  requires_review: boolean;
+  warnings_json: string[] | null;
+  result_json: TaxCalculationResult | null;
+  created_at: string;
+}
+
+export interface TaxCalculationListParams {
+  nit?: string;
+  supplierNit?: string;
+  buyerNit?: string;
+  supplierName?: string;
+  buyerName?: string;
+  name?: string;
+  requiresReview?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export interface TaxCalculationListResponse {
+  items: TaxCalculation[];
+  pagination: { limit: number; offset: number; count: number };
+  filters: Record<string, unknown>;
+}
+
+export async function listTaxCalculations(
+  batchId: string,
+  params: TaxCalculationListParams = {},
+): Promise<TaxCalculationListResponse> {
+  const queryParams: Record<string, string | number | undefined> = {
+    limit: params.limit ?? 200,
+    offset: params.offset ?? 0,
+  };
+  if (params.nit) queryParams.nit = params.nit;
+  if (params.supplierNit) queryParams.supplierNit = params.supplierNit;
+  if (params.buyerNit) queryParams.buyerNit = params.buyerNit;
+  if (params.supplierName) queryParams.supplierName = params.supplierName;
+  if (params.buyerName) queryParams.buyerName = params.buyerName;
+  if (params.name) queryParams.name = params.name;
+  if (params.requiresReview !== undefined)
+    queryParams.requiresReview = String(params.requiresReview);
+  return apiFetch<TaxCalculationListResponse>(
+    `/invoices/batches/${batchId}/tax-calculations`,
+    { params: queryParams },
+  );
+}
+
+export interface ReclassifyInvoicePayload {
+  cost_or_expense?: "cost" | "expense" | "asset" | "liability" | "unknown";
+  account_code?: string;
+  payable_account_code?: string;
+  retefuente_concept?: string;
+  reteica_city?: string;
+  reteica_kind?: "service" | "purchase";
+  mark_as_reviewed?: boolean;
+  reason: string;
+}
+
+export interface ReclassifyInvoiceResult {
+  ok: boolean;
+  invoice_id: string;
+  calculation_updated: boolean;
+  memory_updated: boolean;
+  audit_rows_created: number;
+  warnings?: string[];
+}
+
+/** Reclasifica una factura por su invoice_number (no UUID). */
+export async function reclassifyInvoice(
+  invoiceNumber: string,
+  payload: ReclassifyInvoicePayload,
+): Promise<ReclassifyInvoiceResult> {
+  return apiFetch<ReclassifyInvoiceResult>(
+    `/invoices/${encodeURIComponent(invoiceNumber)}/reclassify`,
+    { method: "POST", body: JSON.stringify(payload) },
+  );
+}
+
+export interface ReclassifyLinePayload {
+  kind?: "purchase" | "service" | "mixed" | "unknown";
+  account_code?: string;
+  retefuente_concept?: string;
+  reteica_kind?: "service" | "purchase";
+  exclude_from_withholding?: boolean;
+  reason: string;
+}
+
+export interface ReclassifyLineResult {
+  ok: boolean;
+  invoice_id: string;
+  line_id: string;
+  calculation_updated: boolean;
+  classification_memory_updated: boolean;
+  audit_rows_created: number;
+  warnings?: string[];
+}
+
+export async function reclassifyLine(
+  invoiceNumber: string,
+  lineId: string,
+  payload: ReclassifyLinePayload,
+): Promise<ReclassifyLineResult> {
+  return apiFetch<ReclassifyLineResult>(
+    `/invoices/${encodeURIComponent(invoiceNumber)}/lines/${encodeURIComponent(lineId)}/reclassify`,
+    { method: "POST", body: JSON.stringify(payload) },
+  );
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 export interface ExportJob {
   id: string;
