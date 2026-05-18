@@ -3,7 +3,26 @@
  * Adjunta automáticamente el Authorization header y maneja errores 401.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
+/**
+ * Elimina caracteres invisibles (BOM U+FEFF, zero-width spaces, etc.) y
+ * espacios extremos del valor de la variable de entorno antes de usarlo
+ * como base URL.
+ *
+ * Antecedente: NEXT_PUBLIC_API_URL fue guardada en Vercel con un BOM al
+ * inicio (\uFEFF/api/v1). Al bakear el valor en el bundle JS, el browser
+ * construía URLs como /%EF%BB%BF/api/v1/... → HTTP 404.
+ * Fix aplicado: Task 14 (2026-05-18).
+ */
+export function normalizeApiBaseUrl(raw: string | undefined): string {
+  if (!raw) return "/api/v1";
+  const stripped = raw
+    .replace(/\uFEFF/g, "")                   // BOM (U+FEFF)
+    .replace(/[\u200B\u200C\u200D\u2060]/g, "") // zero-width chars
+    .trim();
+  return stripped || "/api/v1";
+}
+
+const API_BASE = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
 
 type FetchOptions = RequestInit & { params?: Record<string, string | number | undefined> };
 
@@ -87,7 +106,19 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(extractErrorMessage(body, res.status));
+    const errMsg = extractErrorMessage(body, res.status);
+    // Logging estructurado para Vercel — visible en Runtime Logs y browser console
+    console.error(
+      `[API_ERROR] ${fetchOpts.method ?? "GET"} ${url.pathname} → ${res.status}`,
+      JSON.stringify({
+        correlationId: headers["X-Correlation-Id"],
+        tenant: tenant ?? "unknown",
+        status: res.status,
+        error: errMsg,
+        ts: new Date().toISOString(),
+      })
+    );
+    throw new Error(errMsg);
   }
 
   if (res.status === 204) return undefined as unknown as T;
