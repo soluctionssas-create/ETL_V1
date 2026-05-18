@@ -437,21 +437,25 @@ Test Files  8 passed (8)
 | `git push` | 🔴 PROHIBIDO hasta aprobación |
 | `vercel --prod` | 🔴 PROHIBIDO hasta aprobación |
 | Ejecutar SQL en Supabase producción | 🔴 PROHIBIDO hasta aprobación |
-| Ejecutar SQL en Supabase staging | 🟡 Solo si hay entorno de staging |
+| Ejecutar SQL en Supabase staging | ⛔ BLOQUEADO — No existe proyecto staging separado. Ver `docs/staging-ejecucion-sql-motor-tributario-resultados.md` |
 | Tests locales | ✅ Permitido y verificado |
 | Build local | ✅ Permitido y verificado |
 
 **Commit local pendiente:** todos los cambios están sin commitear (HEAD = `ec805e5`).
+
+> ✅ **Task 9 completada (commit `ecac162`):** SQL hardenizado, RLS aplicado, runbook de staging creado.
 
 ---
 
 ## Sección 18 — Próximos Pasos Recomendados
 
 ### Inmediato (una vez aprobado este informe):
-1. `git add . && git commit -m "feat: Task 5-6 filtros reclasificacion motor tributario 141 tests"`
-2. Revisar Issue-1 (Task 7): ¿`invoice_line_classifications` se mantiene o se elimina?
-3. Ejecutar SQL en Supabase (staging primero, luego producción)
-4. Agregar RLS a tablas nuevas en `supabase_rls_policies.sql`
+1. ~~`git add . && git commit -m "feat: Task 5-6 filtros reclasificacion motor tributario 141 tests"`~~ **✅ Completado (commit `ecac162`)**
+2. ~~Revisar Issue-1 (Task 7): ¿`invoice_line_classifications` se mantiene o se elimina?~~ **✅ Resuelto: se mantiene como tabla reservada para normalización futura**
+3. ~~Agregar RLS a tablas nuevas en `supabase_rls_policies.sql`~~ **✅ Completado (22 políticas en ecac162)**
+4. ~~**Ejecutar SQL en Supabase staging**~~ **⛔ BLOQUEADO — no existe proyecto staging** (ver `docs/staging-ejecucion-sql-motor-tributario-resultados.md`)
+   - **Acción requerida:** Crear proyecto staging en https://app.supabase.com o usar `npx supabase start` (Docker)
+   - Una vez creado, seguir `docs/runbook-sql-staging-motor-tributario.md`
 
 ### Sprint siguiente:
 5. **Recálculo automático post-reclasificación**: actualmente el sistema pone
