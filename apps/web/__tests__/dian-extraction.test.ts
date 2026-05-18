@@ -195,4 +195,32 @@ describe("canonicalLinesToDetalles — FE1789", () => {
     const rows = canonicalLinesToDetalles(canonical);
     expect(rows[0].detalle_precio_unitario_venta).toBe(3800000);
   });
+
+  it("retorna [] cuando canonical.detalle está vacío (fix bug: no más fila fantasma)", () => {
+    // Simular un canonical con 0 líneas de detalle
+    const xml = loadFixture();
+    const canonical = extractDianInvoiceFromXml(xml, { fileName: "dian_FE1789.xml" });
+    // Vaciar el detalle para simular PDF sin ítems
+    const emptyCanonical = { ...canonical, detalle: [] };
+    const rows = canonicalLinesToDetalles(emptyCanonical);
+    // CRITICAL: debe retornar array vacío, NO [{ detalle_nro: 1 }]
+    expect(rows).toHaveLength(0);
+    expect(rows).toEqual([]);
+  });
+
+  it("filtra líneas completamente nulas (descripción y total ambos null)", () => {
+    const xml = loadFixture();
+    const canonical = extractDianInvoiceFromXml(xml, { fileName: "dian_FE1789.xml" });
+    const line = canonical.detalle[0];
+    // Simular línea con descripción y total nulos
+    const nullLine = {
+      ...line,
+      detalle_Descripcion: { ...line.detalle_Descripcion, value: null },
+      detalle_total_linea: { ...line.detalle_total_linea, value: null },
+    };
+    const canonicalWithNullLine = { ...canonical, detalle: [nullLine] };
+    const rows = canonicalLinesToDetalles(canonicalWithNullLine);
+    // La línea completamente vacía debe ser filtrada
+    expect(rows).toHaveLength(0);
+  });
 });

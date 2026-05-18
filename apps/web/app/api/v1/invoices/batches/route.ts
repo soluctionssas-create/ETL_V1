@@ -628,24 +628,34 @@ export async function POST(request: NextRequest) {
     if (dianInvoiceError) {
       dianErrorMessage = dianInvoiceError.message;
     } else if (dianInvoice?.id) {
-      const detailPayload = (seed.dian_details.length > 0 ? seed.dian_details : [{ detalle_nro: 1 }]).map((detail) => ({
-        factura_id: dianInvoice.id,
-        ...detail,
-      }));
-
-      const { error: dianDetailError } = await supabase.from("facturas_dian_detalle").insert(detailPayload);
-
-      if (dianDetailError) {
-        dianErrorMessage = dianDetailError.message;
+      // Solo insertar detalle si hay líneas reales (no insertar fila fantasma)
+      let dianDetailError: { message: string } | null = null;
+      if (seed.dian_details.length > 0) {
+        const detailPayload = seed.dian_details.map((detail) => ({
+          factura_id: dianInvoice.id,
+          ...detail,
+        }));
+        const { error: detailErr } = await supabase
+          .from("facturas_dian_detalle")
+          .insert(detailPayload);
+        if (detailErr) {
+          dianDetailError = detailErr;
+          dianErrorMessage = detailErr.message;
+        }
+      } else {
+        // Sin líneas extraídas: marcar la factura para revisión
+        await supabase
+          .from("facturas_dian")
+          .update({ estado: "parsed_with_warnings" })
+          .eq("id", dianInvoice.id);
       }
 
-      // ── Motor tributario: calcular y guardar retenciones ─────────────────
-      if (!dianDetailError && seed.canonical) {
+      // ── Motor tributario: siempre calcular si hay canonical ──────────────
+      // Se ejecuta incluso cuando no hay líneas de detalle (calcula sobre totales)
+      if (seed.canonical) {
         try {
           const taxConfig = getDefaultTaxRulesConfig();
           const taxResult = calculateInvoiceTaxes(seed.canonical, taxConfig, {
-            // La ciudad del tenant debe configurarse en producción;
-            // aquí inferimos de la factura como fallback
             supplier_city: seed.canonical.datos_emisor_vendedor_municipio_ciudad.value ?? undefined,
             buyer_city: seed.canonical.datos_adquiriente_comprador_municipio_ciudad.value ?? undefined,
           });
@@ -673,16 +683,27 @@ export async function POST(request: NextRequest) {
             retefuente_difference: taxResult.differences.retefuente,
             reteica_difference: taxResult.differences.reteica,
             reteiva_difference: taxResult.differences.reteiva,
-            requires_review: taxResult.requires_review,
+            requires_review: taxResult.requires_review || seed.dian_details.length === 0,
             warnings_json: taxResult.warnings,
             result_json: taxResult,
           };
           if (tenantId) taxPayload.tenant_id = tenantId;
 
-          await supabase.from("invoice_tax_calculations").insert(taxPayload);
+          const { error: taxInsertErr } = await supabase
+            .from("invoice_tax_calculations")
+            .insert(taxPayload);
+          if (taxInsertErr) {
+            console.error("Tax calculation insert error:", taxInsertErr.message);
+          }
         } catch (taxErr) {
           console.error("Tax calculation error (non-blocking):", taxErr);
         }
+      }
+
+      // Suprimir el dianDetailError para que el batch quede "completed"
+      // (el detalle vacío es una advertencia, no un fallo de extracción)
+      if (dianDetailError && seed.dian_details.length === 0) {
+        dianErrorMessage = null;
       }
     }
   }

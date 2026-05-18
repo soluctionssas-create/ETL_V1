@@ -31,28 +31,23 @@ const FIXTURE_PATH = join(__dirname, "../../../../tests/fixtures/real/factura_it
 const _require = createRequire(import.meta.url);
 const pdfParse = _require("pdf-parse/lib/pdf-parse.js");
 
-describe("Factura grande PDF real — F11-10191", () => {
+// Si el fixture no existe, todos los tests se marcan como SKIPPED (no como passed)
+describe.skipIf(!existsSync(FIXTURE_PATH))("Factura grande PDF real — F11-10191", () => {
   let pdfText = "";
-  let skipped = false;
 
   beforeAll(async () => {
-    if (!existsSync(FIXTURE_PATH)) {
-      console.warn("⚠ Fixture factura_iteam_grandes.pdf no encontrado — tests omitidos");
-      skipped = true;
-      return;
-    }
     const buffer = readFileSync(FIXTURE_PATH);
     const data = await pdfParse(buffer);
     pdfText = data.text ?? "";
   });
 
   it("Lee el PDF sin error", () => {
-    if (skipped) return;
+
     expect(pdfText.length).toBeGreaterThan(1000);
   });
 
   it("Extrae >= 431 ítems del detalle", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, {
       fileName: "factura_iteam_grandes.pdf",
     });
@@ -60,7 +55,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   });
 
   it("Subtotal ≈ 22.283.703 (tolerancia ±5)", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, {
       fileName: "factura_iteam_grandes.pdf",
     });
@@ -69,7 +64,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   });
 
   it("IVA total = 0", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, {
       fileName: "factura_iteam_grandes.pdf",
     });
@@ -77,7 +72,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   });
 
   it("INC total ≈ 1.782.696 (tolerancia ±5)", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, {
       fileName: "factura_iteam_grandes.pdf",
     });
@@ -86,7 +81,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   });
 
   it("Total factura ≈ 25.507.267 (tolerancia ±10)", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, {
       fileName: "factura_iteam_grandes.pdf",
     });
@@ -95,7 +90,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   });
 
   it("CRÍTICO: ReteIVA = 0 porque IVA = 0", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, {
       fileName: "factura_iteam_grandes.pdf",
     });
@@ -107,7 +102,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   });
 
   it("Motor tributario no genera errores en la factura grande", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, {
       fileName: "factura_iteam_grandes.pdf",
     });
@@ -120,7 +115,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   });
 
   it("Clasifica actividad 5611 (restaurante) como compras/purchase", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, {
       fileName: "factura_iteam_grandes.pdf",
     });
@@ -136,14 +131,14 @@ describe("Factura grande PDF real — F11-10191", () => {
   // ── Cabecera ──────────────────────────────────────────────────────────────
 
   it("Cabecera: actividad económica es 5611 y moneda es COP", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     expect(canonical.datos_emisor_vendedor_actividad_economica.value).toBe("5611");
     expect(canonical.totales_moneda.value).toBe("COP");
   });
 
   it("Cabecera: emisor contiene 'AZOTEA' y forma de pago es Contado", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     expect(canonical.datos_emisor_vendedor_razon_social.value).toContain("AZOTEA");
     expect(canonical.datos_documento_forma_de_pago.value).toBe("Contado");
@@ -152,7 +147,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   // ── Ítems ─────────────────────────────────────────────────────────────────
 
   it("Ítems: 431 líneas clasificadas, ninguna con base inválida, suma ≈ subtotal", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     const config = getDefaultTaxRulesConfig();
     const result = calculateInvoiceTaxes(canonical, config, { tenant_city: "Cali" });
@@ -173,7 +168,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   // ── ReteIVA ───────────────────────────────────────────────────────────────
 
   it("ReteIVA: grupo explícito applies=false, base=0, razón contiene 'IVA' y 'no aplica'", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     const config = getDefaultTaxRulesConfig();
     const result = calculateInvoiceTaxes(canonical, config, { tenant_city: "Cali" });
@@ -193,7 +188,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   // ── ReteFuente ────────────────────────────────────────────────────────────
 
   it("ReteFuente: grupo auditable — concepto, cuenta, tarifa, base, líneas", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     const config = getDefaultTaxRulesConfig();
     const result = calculateInvoiceTaxes(canonical, config, { tenant_city: "Cali" });
@@ -210,7 +205,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   });
 
   it("ReteFuente: reportada=0, calculada=557.093, diferencia → requires_review", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     const config = getDefaultTaxRulesConfig();
     const result = calculateInvoiceTaxes(canonical, config, { tenant_city: "Cali" });
@@ -224,7 +219,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   // ── ReteICA ───────────────────────────────────────────────────────────────
 
   it("ReteICA: ciudad CALI, aplica para compras con tarifa 7.70‰", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     const config = getDefaultTaxRulesConfig();
     const result = calculateInvoiceTaxes(canonical, config, { tenant_city: "Cali" });
@@ -239,7 +234,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   });
 
   it("ReteICA: sin tenant_city → warning de ciudad ambigua o no configurada", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     const config = getDefaultTaxRulesConfig();
     // Sin tenant_city: el motor no tiene ciudad definitiva desde la factura (ambos null)
@@ -253,7 +248,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   // ── Clasificación ─────────────────────────────────────────────────────────
 
   it("Clasificación: >= 429 purchase, <= 2 unknown, 0 service", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     const config = getDefaultTaxRulesConfig();
     const result = calculateInvoiceTaxes(canonical, config, { tenant_city: "Cali" });
@@ -270,7 +265,7 @@ describe("Factura grande PDF real — F11-10191", () => {
   // ── Diferencias y revisión ────────────────────────────────────────────────
 
   it("Diferencias exactas: ReteFuente=557.093, ReteICA=171.585, ReteIVA=0", () => {
-    if (skipped) return;
+
     const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
     const config = getDefaultTaxRulesConfig();
     const result = calculateInvoiceTaxes(canonical, config, { tenant_city: "Cali" });

@@ -94,14 +94,20 @@ export function canonicalToFacturaDian(
 
 /**
  * Convierte las líneas de detalle del canonical a filas de facturas_dian_detalle.
+ * Retorna [] si no hay líneas — el llamador decide si eso es un error.
  */
 export function canonicalLinesToDetalles(
   canonical: DianCanonicalInvoice
 ): Record<string, unknown>[] {
   if (canonical.detalle.length === 0) {
-    return [{ detalle_nro: 1 }];
+    return [];
   }
-  return canonical.detalle.map((line) => ({
+  // Filtrar líneas completamente vacías (descripción Y total ambos nulos)
+  const validLines = canonical.detalle.filter(
+    (l) => l.detalle_Descripcion.value != null || l.detalle_total_linea.value != null
+  );
+  if (validLines.length === 0) return [];
+  return validLines.map((line) => ({
     detalle_nro: line.detalle_Nro.value,
     detalle_codigo: line.detalle_Codigo.value,
     detalle_descripcion: line.detalle_Descripcion.value,

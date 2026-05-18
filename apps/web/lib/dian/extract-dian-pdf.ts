@@ -612,12 +612,26 @@ export function extractDianInvoiceFromPdfText(
 
   // ── Detalle ────────────────────────────────────────────────────────────────
 
-  // Para el formato DIAN de "columnas concatenadas", intentar primero en las
-  // líneas completas del PDF (el bloque de detalle puede estar mal delimitado).
+  // Estrategia 1: formato DIAN "columnas concatenadas" (todas las líneas)
   const concatenatedOnAll = parseConcatenatedDianItems(lines);
-  const rawItems = concatenatedOnAll.length >= 5
-    ? concatenatedOnAll
-    : extractDetailLines(detailBlock.length > 0 ? detailBlock : lines);
+
+  // Estrategia 2: extractor genérico con detección de bloque
+  const genericFromBlock = concatenatedOnAll.length < 5
+    ? extractDetailLines(detailBlock.length > 0 ? detailBlock : lines)
+    : [];
+
+  // Estrategia 3: extractor genérico sobre todas las líneas (cuando el bloque
+  // no fue detectado y la estrategia 2 también devolvió 0)
+  const genericFromAll = concatenatedOnAll.length < 5 && genericFromBlock.length === 0 && detailBlock.length > 0
+    ? extractDetailLines(lines)
+    : [];
+
+  const rawItems =
+    concatenatedOnAll.length >= 5
+      ? concatenatedOnAll
+      : genericFromBlock.length > 0
+        ? genericFromBlock
+        : genericFromAll;
 
   if (rawItems.length === 0) {
     warnings.push("No se encontraron ítems en el PDF (posible layout no estándar)");
