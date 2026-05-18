@@ -45,7 +45,7 @@ con COMMENT, y los routes de Next.js actualizados para persistir las FKs recién
 | FUTURO | ⚪ Informativo | `invoice_line_classifications` y `invoice_tax_calculation_groups` no se pueblan | Requieren pipeline de migración de JSONB → filas normalizadas; sprint futuro |
 | FUTURO | ⚪ Informativo | Recálculo automático post-reclasificación no implementado | Sprint siguiente |
 | FUTURO | ⚪ Informativo | Tests de integración de routes (mocks Supabase vía msw/nock) | Sprint siguiente |
-| BLOQUEANTE | 🔴 Crítico | No existe proyecto Supabase staging separado — SQL pendiente de ejecutar | Crear proyecto staging en Supabase (ver opciones en `docs/staging-ejecucion-sql-motor-tributario-resultados.md`) |
+| BLOQUEANTE | ✅ Resuelto | Proyecto Supabase staging creado (`etl-v1-staging` / `skrjyrnprmoattwlitzs`) — 7 scripts SQL ejecutados, 14 tablas verificadas, 15 políticas RLS, seed mínimo validado | Task 11 completada — ver `docs/staging-ejecucion-sql-motor-tributario-resultados.md` |
 
 ---
 
