@@ -360,26 +360,38 @@ Date:   2026-05-18
 
 ---
 
-## 15. Restricciones Antes de Producción
+## 15. Estado de Producción — Task 12 ✅
 
-**NO ejecutar** hasta que el usuario confirme revisión de este informe:
+**Ejecución en producción completada** (`pvzchcscuqpzuaxbfihh`):
 
 ```
-❌ git push
-❌ npx vercel --prod
-❌ Ejecutar SQL en Supabase producción
-❌ Ejecutar SQL en Supabase staging sin staging aislado
+✅ Task 12 completada — 2025-05-18
+  Scripts ejecutados: 8 (0, 1, 2, 3, 4, 5, 6A, 6B)
+  Tablas en producción: 15 (14 del sprint + todos preexistente)
+  RLS habilitado: 15/15 tablas
+  Políticas totales: 40 (37 sprint + 3 preexistentes en todos)
+  Motor tributario: 22 políticas
+  tenant_reclassification_audit: 1 política (SELECT only)
+  Tests: 141/141 ✅
+  Build: Compiled successfully ✅
 ```
 
-**Checklist pre-producción:**
+Ver detalles completos: `docs/produccion-ejecucion-sql-motor-tributario-resultados.md`
 
-- [ ] Usuario revisó y aprobó este informe
-- [ ] SQL ejecutado en staging siguiendo `docs/runbook-sql-staging-motor-tributario.md`
-- [ ] Verificación post-staging: queries de la Sección 10 retornan resultados esperados
-- [ ] Smoke tests de la Sección 13 del runbook completados sin errores
-- [ ] Decisión tomada sobre `invoice_line_classifications` y `invoice_tax_calculation_groups` (¿sprint futuro de normalización?)
-- [ ] `git push` aprobado explícitamente
-- [ ] Deploy a Vercel aprobado explícitamente
+**Restricciones aún activas:**
+
+```
+❌ git push (pendiente aprobación)
+❌ npx vercel --prod (pendiente aprobación)
+```
+
+**Checklist pre-producción (completado):**
+
+- [x] Usuario revisó y aprobó este informe
+- [x] SQL ejecutado en staging siguiendo `docs/runbook-sql-staging-motor-tributario.md`
+- [x] Verificación post-staging: queries retornaron resultados esperados
+- [x] SQL ejecutado en producción (Task 12) — 8 scripts, verificaciones pasaron
+- [x] Decisión tomada sobre `invoice_line_classifications` y `invoice_tax_calculation_groups` — se mantienen como tablas reservadas para normalización futura
 
 > **Runbook de staging disponible:** [`docs/runbook-sql-staging-motor-tributario.md`](./runbook-sql-staging-motor-tributario.md) — Contiene el orden exacto de ejecución, queries de verificación por script, 22 verificaciones post-ejecución y criterios de aprobación para producción.
 

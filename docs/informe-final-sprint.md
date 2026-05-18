@@ -436,7 +436,7 @@ Test Files  8 passed (8)
 |--------|--------|
 | `git push` | 🔴 PROHIBIDO hasta aprobación |
 | `vercel --prod` | 🔴 PROHIBIDO hasta aprobación |
-| Ejecutar SQL en Supabase producción | 🔴 PROHIBIDO hasta aprobación |
+| Ejecutar SQL en Supabase producción | ✅ COMPLETADO — Task 12: `pvzchcscuqpzuaxbfihh`, 8 scripts (0-6B), 15 tablas (14 del sprint + `todos` preexistente), 15/15 RLS, 40 políticas totales, 22 motor tributario |
 | Ejecutar SQL en Supabase staging | ✅ COMPLETADO — Task 11: proyecto `etl-v1-staging` (`skrjyrnprmoattwlitzs`), 7 scripts, 14 tablas, 37 políticas RLS (Task 11.1), seed validado |
 | Tests locales | ✅ Permitido y verificado |
 | Build local | ✅ Permitido y verificado |
@@ -446,6 +446,7 @@ Test Files  8 passed (8)
 > ✅ **Task 9 completada (commit `ecac162`):** SQL hardenizado, RLS aplicado, runbook de staging creado.
 > ✅ **Task 10 completada (commit `f2c6642`):** Análisis pre-staging, `.env.staging.local` creado, Scripts 0-1 ejecutados.
 > ✅ **Task 11 + 11.1 completadas:** Ambiente Supabase staging completamente validado — 14 tablas, 14/14 tablas RLS (reconciliadas en Task 11.1), 37 políticas, seed mínimo, 141/141 tests, build limpio.
+> ✅ **Task 12 completada:** SQL ejecutado en producción `pvzchcscuqpzuaxbfihh` — 8 scripts (0, 1, 2, 3, 4, 5, 6A, 6B), 15/15 tablas con RLS, 40 políticas totales (37 del sprint + 3 preexistentes), 22 políticas motor tributario, `tenant_reclassification_audit` solo SELECT, 141/141 tests, build limpio. Ver `docs/produccion-ejecucion-sql-motor-tributario-resultados.md`
 
 ---
 
@@ -456,7 +457,7 @@ Test Files  8 passed (8)
 2. ~~Revisar Issue-1 (Task 7): ¿`invoice_line_classifications` se mantiene o se elimina?~~ **✅ Resuelto: se mantiene como tabla reservada para normalización futura**
 3. ~~Agregar RLS a tablas nuevas en `supabase_rls_policies.sql`~~ **✅ Completado (22 políticas en ecac162)**
 4. ~~**Ejecutar SQL en Supabase staging**~~ **✅ COMPLETADO (Task 11 + 11.1)** — `etl-v1-staging` / `skrjyrnprmoattwlitzs` creado, validado y RLS reconciliada. Ver `docs/staging-ejecucion-sql-motor-tributario-resultados.md`
-5. **Aprobar SQL para producción** (`pvzchcscuqpzuaxbfihh`) — staging validado, pendiente aprobación del usuario
+5. ~~**Aprobar SQL para producción**~~ **✅ COMPLETADO (Task 12)** — SQL ejecutado en producción `pvzchcscuqpzuaxbfihh`. 15 tablas, 15/15 RLS, 40 políticas (37 sprint + 3 preexistentes), 22 motor tributario. Ver `docs/produccion-ejecucion-sql-motor-tributario-resultados.md`
 
 ### Sprint siguiente:
 5. **Recálculo automático post-reclasificación**: actualmente el sistema pone

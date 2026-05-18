@@ -261,7 +261,7 @@ ejecución en producción (`pvzchcscuqpzuaxbfihh`) cuando el usuario lo autorice
 - ✅ Build: ✓ Compiled successfully
 - ✅ Zero errores en staging
 
-**Pendiente:** Autorización explícita del usuario para ejecutar los scripts en producción.
+**Pendiente:** ~~Autorización explícita del usuario para ejecutar los scripts en producción.~~ **✅ COMPLETADO — Task 12 ejecutada en producción.**
 
 ---
 
@@ -286,4 +286,12 @@ ejecución en producción (`pvzchcscuqpzuaxbfihh`) cuando el usuario lo autorice
    └── Build: ✓ Compiled successfully
 
 ⛔ pvzchcscuqpzuaxbfihh (PRODUCCIÓN)
-   └── NO MODIFICADO — Pendiente aprobación
+   └── ✅ COMPLETADO — Task 12 (2025-05-18)
+   └── 15 tablas (14 sprint + todos preexistente)
+   └── 15/15 tablas con RLS habilitada
+   └── 40 políticas totales (37 sprint + 3 preexistentes en todos)
+   └── 22 políticas motor tributario
+   └── tenant_reclassification_audit: 1 política (SELECT only)
+   └── 141/141 tests passing
+   └── Build: ✓ Compiled successfully
+   └── Ver: docs/produccion-ejecucion-sql-motor-tributario-resultados.md
