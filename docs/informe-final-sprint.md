@@ -437,7 +437,7 @@ Test Files  8 passed (8)
 | `git push` | 🔴 PROHIBIDO hasta aprobación |
 | `vercel --prod` | 🔴 PROHIBIDO hasta aprobación |
 | Ejecutar SQL en Supabase producción | 🔴 PROHIBIDO hasta aprobación |
-| Ejecutar SQL en Supabase staging | ✅ COMPLETADO — Task 11: proyecto `etl-v1-staging` (`skrjyrnprmoattwlitzs`), 7 scripts, 14 tablas, 15 políticas RLS, seed validado |
+| Ejecutar SQL en Supabase staging | ✅ COMPLETADO — Task 11: proyecto `etl-v1-staging` (`skrjyrnprmoattwlitzs`), 7 scripts, 14 tablas, 37 políticas RLS (Task 11.1), seed validado |
 | Tests locales | ✅ Permitido y verificado |
 | Build local | ✅ Permitido y verificado |
 
@@ -445,7 +445,7 @@ Test Files  8 passed (8)
 
 > ✅ **Task 9 completada (commit `ecac162`):** SQL hardenizado, RLS aplicado, runbook de staging creado.
 > ✅ **Task 10 completada (commit `f2c6642`):** Análisis pre-staging, `.env.staging.local` creado, Scripts 0-1 ejecutados.
-> ✅ **Task 11 completada:** Ambiente Supabase staging completamente validado — 14 tablas, 6 tablas RLS, 15 políticas, seed mínimo, 141/141 tests, build limpio.
+> ✅ **Task 11 + 11.1 completadas:** Ambiente Supabase staging completamente validado — 14 tablas, 14/14 tablas RLS (reconciliadas en Task 11.1), 37 políticas, seed mínimo, 141/141 tests, build limpio.
 
 ---
 
@@ -455,7 +455,7 @@ Test Files  8 passed (8)
 1. ~~`git add . && git commit -m "feat: Task 5-6 filtros reclasificacion motor tributario 141 tests"`~~ **✅ Completado (commit `ecac162`)**
 2. ~~Revisar Issue-1 (Task 7): ¿`invoice_line_classifications` se mantiene o se elimina?~~ **✅ Resuelto: se mantiene como tabla reservada para normalización futura**
 3. ~~Agregar RLS a tablas nuevas en `supabase_rls_policies.sql`~~ **✅ Completado (22 políticas en ecac162)**
-4. ~~**Ejecutar SQL en Supabase staging**~~ **✅ COMPLETADO (Task 11)** — `etl-v1-staging` / `skrjyrnprmoattwlitzs` creado y validado. Ver `docs/staging-ejecucion-sql-motor-tributario-resultados.md`
+4. ~~**Ejecutar SQL en Supabase staging**~~ **✅ COMPLETADO (Task 11 + 11.1)** — `etl-v1-staging` / `skrjyrnprmoattwlitzs` creado, validado y RLS reconciliada. Ver `docs/staging-ejecucion-sql-motor-tributario-resultados.md`
 5. **Aprobar SQL para producción** (`pvzchcscuqpzuaxbfihh`) — staging validado, pendiente aprobación del usuario
 
 ### Sprint siguiente:

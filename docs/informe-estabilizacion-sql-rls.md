@@ -45,7 +45,8 @@ con COMMENT, y los routes de Next.js actualizados para persistir las FKs recién
 | FUTURO | ⚪ Informativo | `invoice_line_classifications` y `invoice_tax_calculation_groups` no se pueblan | Requieren pipeline de migración de JSONB → filas normalizadas; sprint futuro |
 | FUTURO | ⚪ Informativo | Recálculo automático post-reclasificación no implementado | Sprint siguiente |
 | FUTURO | ⚪ Informativo | Tests de integración de routes (mocks Supabase vía msw/nock) | Sprint siguiente |
-| BLOQUEANTE | ✅ Resuelto | Proyecto Supabase staging creado (`etl-v1-staging` / `skrjyrnprmoattwlitzs`) — 7 scripts SQL ejecutados, 14 tablas verificadas, 15 políticas RLS, seed mínimo validado | Task 11 completada — ver `docs/staging-ejecucion-sql-motor-tributario-resultados.md` |
+| BLOQUEANTE | ✅ Resuelto | Proyecto Supabase staging creado (`etl-v1-staging` / `skrjyrnprmoattwlitzs`) — 7 scripts SQL ejecutados, 14 tablas verificadas, 37 políticas RLS, seed mínimo validado | Task 11 + 11.1 completadas — ver `docs/staging-ejecucion-sql-motor-tributario-resultados.md` |
+| RLS-DISCREPANCIA | ✅ Resuelto | 8 tablas motor tributario tenían `rls_enabled = false` en staging tras Task 11 (script largo truncado en Monaco) | Task 11.1: patch ejecutado, 14/14 tablas con RLS, 37 policies totales |
 
 ---
 
