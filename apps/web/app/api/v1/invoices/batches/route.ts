@@ -8,6 +8,9 @@ import {
   canonicalToFacturaDian,
   canonicalLinesToDetalles,
 } from "@/lib/dian";
+import type { DianCanonicalInvoice } from "@/lib/dian/dian-canonical-types";
+import { calculateInvoiceTaxes } from "@/lib/tax/calculate-invoice-taxes";
+import { getDefaultTaxRulesConfig } from "@/lib/tax/tax-rules-loader";
 
 export const runtime = "nodejs";
 
@@ -38,6 +41,7 @@ type InvoiceSeed = {
   raw_data: Record<string, unknown>;
   dian_invoice: Record<string, unknown>;
   dian_details: Record<string, unknown>[];
+  canonical?: DianCanonicalInvoice;
 };
 
 function extractXmlTag(source: string, tags: string[]): string | null {
@@ -179,6 +183,7 @@ async function buildInvoiceSeedFromPdf(file: File, batchId: string, invoiceId: s
     },
     dian_invoice: dianInvoice,
     dian_details: dianDetails,
+    canonical,
   };
 }
 
@@ -204,6 +209,7 @@ function buildInvoiceSeedFromXml(sourceName: string, xml: string, batchId: strin
     raw_data: { origen_extraccion: "xml_canonical" },
     dian_invoice: dianInvoice,
     dian_details: dianDetails,
+    canonical,
   };
 }
 // ─── Legacy XML helper functions (kept for reference) ────────────────────────
@@ -631,6 +637,52 @@ export async function POST(request: NextRequest) {
 
       if (dianDetailError) {
         dianErrorMessage = dianDetailError.message;
+      }
+
+      // ── Motor tributario: calcular y guardar retenciones ─────────────────
+      if (!dianDetailError && seed.canonical) {
+        try {
+          const taxConfig = getDefaultTaxRulesConfig();
+          const taxResult = calculateInvoiceTaxes(seed.canonical, taxConfig, {
+            // La ciudad del tenant debe configurarse en producción;
+            // aquí inferimos de la factura como fallback
+            supplier_city: seed.canonical.datos_emisor_vendedor_municipio_ciudad.value ?? undefined,
+            buyer_city: seed.canonical.datos_adquiriente_comprador_municipio_ciudad.value ?? undefined,
+          });
+
+          const taxPayload: Record<string, unknown> = {
+            batch_id: batch.id,
+            invoice_id: seed.invoiceId,
+            factura_dian_id: dianInvoice.id,
+            invoice_number: taxResult.invoice_number,
+            supplier_nit: taxResult.supplier_nit ?? null,
+            supplier_name: taxResult.supplier_name ?? null,
+            buyer_nit: taxResult.buyer_nit ?? null,
+            buyer_name: taxResult.buyer_name ?? null,
+            city: taxResult.city ?? null,
+            subtotal: taxResult.subtotal,
+            iva_total: taxResult.iva_total,
+            inc_total: taxResult.inc_total,
+            total_invoice: taxResult.total_invoice,
+            retefuente_calculated: taxResult.totals.retefuente,
+            reteica_calculated: taxResult.totals.reteica,
+            reteiva_calculated: taxResult.totals.reteiva,
+            retefuente_reported: taxResult.reported_withholdings.retefuente,
+            reteica_reported: taxResult.reported_withholdings.reteica,
+            reteiva_reported: taxResult.reported_withholdings.reteiva,
+            retefuente_difference: taxResult.differences.retefuente,
+            reteica_difference: taxResult.differences.reteica,
+            reteiva_difference: taxResult.differences.reteiva,
+            requires_review: taxResult.requires_review,
+            warnings_json: taxResult.warnings,
+            result_json: taxResult,
+          };
+          if (tenantId) taxPayload.tenant_id = tenantId;
+
+          await supabase.from("invoice_tax_calculations").insert(taxPayload);
+        } catch (taxErr) {
+          console.error("Tax calculation error (non-blocking):", taxErr);
+        }
       }
     }
   }

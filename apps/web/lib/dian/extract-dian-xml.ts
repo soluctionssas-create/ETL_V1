@@ -138,18 +138,18 @@ interface UnwrapResult {
  */
 function unwrapAttachedDocument(rawXml: string): UnwrapResult {
   // Detectar AttachedDocument (con o sin namespace fe:)
-  const isAttached = /<(?:[\\w.-]+:)?AttachedDocument\b/i.test(rawXml);
+  const isAttached = /<(?:[\w.-]+:)?AttachedDocument\b/i.test(rawXml);
   if (!isAttached) {
     return { xml: rawXml, isAttachedDocument: false, embeddedInvoiceFound: false };
   }
 
   // Buscar el bloque CDATA dentro de cbc:Description
   const cdataRe =
-    /<(?:[\\w.-]+:)?Description\b[^>]*>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/(?:[\\w.-]+:)?Description>/i;
+    /<(?:[\w.-]+:)?Description\b[^>]*>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/(?:[\w.-]+:)?Description>/i;
   const cdataMatch = rawXml.match(cdataRe);
   if (cdataMatch?.[1]) {
     const embedded = cdataMatch[1].trim();
-    const hasInvoice = /<(?:[\\w.-]+:)?Invoice\b/i.test(embedded);
+    const hasInvoice = /<(?:[\w.-]+:)?Invoice\b/i.test(embedded);
     return {
       xml: hasInvoice ? embedded : rawXml,
       isAttachedDocument: true,
@@ -378,17 +378,17 @@ export function extractDianInvoiceFromXml(
 
   // Detectar tipo de XML
   const xmlDetectedType =
-    /<(?:[\\w.-]+:)?Invoice\b/i.test(xml)
+    /<(?:[\w.-]+:)?Invoice\b/i.test(xml)
       ? "Invoice"
-      : /<(?:[\\w.-]+:)?CreditNote\b/i.test(xml)
+      : /<(?:[\w.-]+:)?CreditNote\b/i.test(xml)
       ? "CreditNote"
-      : /<(?:[\\w.-]+:)?DebitNote\b/i.test(xml)
+      : /<(?:[\w.-]+:)?DebitNote\b/i.test(xml)
       ? "DebitNote"
       : "Unknown";
 
   // Remover bloque UBLExtensions para evitar interferencia en extracción de tags
   const xmlClean = xml.replace(
-    /<(?:[\\w.-]+:)?UBLExtensions\b[\s\S]*?<\/(?:[\\w.-]+:)?UBLExtensions>/gi,
+    /<(?:[\w.-]+:)?UBLExtensions\b[\s\S]*?<\/(?:[\w.-]+:)?UBLExtensions>/gi,
     ""
   );
 

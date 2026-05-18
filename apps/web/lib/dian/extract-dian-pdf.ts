@@ -255,6 +255,146 @@ const ITEM_LINE_RE =
 const TOTALS_EXCLUSION_RE =
   /\b(subtotal|descuento|recargo|iva|inc|rete|retefuente|reteiva|impuesto|total|cufe|nit|fecha|plazo|vencimiento|orden|pagad[oa]|anticipo)\b/i;
 
+// ─── Parser DIAN "columnas concatenadas" ──────────────────────────────────────
+// Formato donde todas las columnas de la tabla aparecen concatenadas sin
+// separadores visibles: {nro}{code}{descripcion}{UM:2d}{cant}{precio}...{total}
+// Separación descripción↔UM mediante lookahead: UM(2d) + qty en formato N,NN.
+// Solo capturamos grupos 1-6; el precio (col "Precio unitario") = línea total.
+const DIAN_CONCAT_RE =
+  /^(\d{1,4})(\d{6,12})([A-Za-zÁÉÍÓÚáéíóúÑñ][A-Za-zÁÉÍÓÚáéíóúÑñ\s\-\/.#&]*?)(?=\d{2}\d{1,5},\d{2})(\d{2})(\d{1,5},\d{2})([\d.]+,\d{2})/;
+
+/**
+ * Pre-procesa líneas del bloque de detalle para manejar el formato DIAN de
+ * "columnas concatenadas". Gestiona 3 tipos de ítems multi-línea causados
+ * por saltos de página en el PDF:
+ *   Tipo A – línea tiene solo nro+código; descripción y números en líneas siguientes.
+ *   Tipo B – línea tiene nro+código+desc+UM+cant pero precios están cortados.
+ *   Tipo C – variante de B con diferente punto de corte.
+ */
+function mergeConcatenatedItemLines(rawLines: string[]): string[] {
+  const NOISE_LINE_RE =
+    /^\$+$|^Hoja\s+\d|^Nro\.|^Código|^Descripci|^Descuentos|^Datos\s+Totales|^Subtotal|^IVA|^INC|^Total|^Valores|^RETENCIONES|^Rete|^MONEDA|^TASA|^PDF|^XML|^Número|^Rango|^Vigencia/i;
+  const ITEM_START_RE = /^\d{1,4}\d{6,12}/;
+  const ITEM_START_NO_TAIL_RE = /^\d{1,4}\d{6,12}$/;
+  const NUMBERS_ONLY_RE = /^[\d.,\s]+$/;
+  const UM_QTY_START_RE = /^\d{2}\d{1,5},\d{2}/;
+
+  const merged: string[] = [];
+  let i = 0;
+
+  while (i < rawLines.length) {
+    const line = rawLines[i].trim();
+
+    if (!line || NOISE_LINE_RE.test(line)) {
+      i++;
+      continue;
+    }
+
+    // Tipo A: nro+código solamente (sin descripción ni números en la misma línea)
+    if (ITEM_START_NO_TAIL_RE.test(line)) {
+      const parts: string[] = [line];
+      i++;
+      while (i < rawLines.length) {
+        const next = rawLines[i].trim();
+        if (!next || /^\$+$/.test(next)) { i++; continue; }
+        if (ITEM_START_RE.test(next)) break;
+        if (NOISE_LINE_RE.test(next)) break;
+        if (UM_QTY_START_RE.test(next)) {
+          parts.push(next);
+          i++;
+          break;
+        }
+        if (/[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(next)) {
+          parts.push(next);
+          i++;
+          continue;
+        }
+        break;
+      }
+      if (parts.length >= 2) {
+        const nroCode = parts[0];
+        const numbersLine = parts[parts.length - 1];
+        const descParts = parts.slice(1, parts.length - 1);
+        merged.push(nroCode + descParts.join("") + numbersLine);
+      } else {
+        merged.push(line);
+      }
+      continue;
+    }
+
+    // Línea ya completa: no requiere merging
+    if (DIAN_CONCAT_RE.test(line)) {
+      merged.push(line);
+      i++;
+      continue;
+    }
+
+    // Tipo B/C: ítem con nro+código+desc pero precios cortados por salto de página
+    if (ITEM_START_RE.test(line)) {
+      const parts: string[] = [line];
+      i++;
+      while (i < rawLines.length) {
+        const next = rawLines[i].trim();
+        if (!next || next === "  ") { i++; continue; }
+        if (/^\$+$/.test(next)) break;
+        if (ITEM_START_RE.test(next)) break;
+        if (NOISE_LINE_RE.test(next)) break;
+        if (NUMBERS_ONLY_RE.test(next)) {
+          parts.push(next);
+          i++;
+          continue;
+        }
+        break;
+      }
+      merged.push(parts.join(""));
+      continue;
+    }
+
+    merged.push(line);
+    i++;
+  }
+
+  return merged;
+}
+
+/**
+ * Intenta parsear ítems en formato DIAN "columnas concatenadas".
+ * Devuelve array vacío si el formato no aplica (fallback al parser genérico).
+ */
+function parseConcatenatedDianItems(rawLines: string[]): Array<{
+  nro: number;
+  codigo: string | null;
+  descripcion: string | null;
+  um: string | null;
+  cantidad: number;
+  precioUnitario: number | null;
+  descuento: number | null;
+  total: number | null;
+}> {
+  const processedLines = mergeConcatenatedItemLines(rawLines);
+  const items: ReturnType<typeof parseConcatenatedDianItems> = [];
+
+  for (const line of processedLines) {
+    const m = DIAN_CONCAT_RE.exec(line);
+    if (!m) continue;
+
+    items.push({
+      nro: parseInt(m[1], 10),
+      codigo: m[2] || null,
+      descripcion: m[3].trim() || null,
+      um: m[4] || null,
+      cantidad: parseAmount(m[5]) ?? 1,
+      precioUnitario: parseAmount(m[6]),
+      descuento: null,
+      // En el formato DIAN concatenado, la columna "Precio unitario" es
+      // el total de la línea (precio × cantidad). No hay columna separada de total.
+      total: parseAmount(m[6]),
+    });
+  }
+
+  return items;
+}
+
 function extractDetailLines(detailBlock: string[]): Array<{
   nro: number;
   codigo: string | null;
@@ -472,9 +612,12 @@ export function extractDianInvoiceFromPdfText(
 
   // ── Detalle ────────────────────────────────────────────────────────────────
 
-  const rawItems = extractDetailLines(
-    detailBlock.length > 0 ? detailBlock : lines
-  );
+  // Para el formato DIAN de "columnas concatenadas", intentar primero en las
+  // líneas completas del PDF (el bloque de detalle puede estar mal delimitado).
+  const concatenatedOnAll = parseConcatenatedDianItems(lines);
+  const rawItems = concatenatedOnAll.length >= 5
+    ? concatenatedOnAll
+    : extractDetailLines(detailBlock.length > 0 ? detailBlock : lines);
 
   if (rawItems.length === 0) {
     warnings.push("No se encontraron ítems en el PDF (posible layout no estándar)");
@@ -514,17 +657,26 @@ export function extractDianInvoiceFromPdfText(
   );
   const iva = parseAmount(ivaMatch?.[1] ?? "");
 
-  const totalMatch = totalsText.match(
-    /(?:total\s+(?:a\s+pagar|factura|neto)|valor\s+total)\s*[:.]?\s*([\d.,]+)/i
-  );
+  // INC — puede aparecer concatenado sin espacio: "INC1.782.696,53"
+  const incMatch = totalsText.match(/^INC\s*([\d.]+,\d{2})\s*$/m);
+  const inc = parseAmount(incMatch?.[1] ?? "");
+
+  // Total factura — soporta rellenos de caracteres especiales y "COP $"
+  // Ej: "Total factura (=) ᅠᅠᅠᅠᅠᅠᅠᅠᅠᅠ COP $25.507.267,00"
+  // [^\d\n]* = no cruzar líneas (evita capturar números de otras líneas)
+  const totalMatch =
+    totalsText.match(/Total\s+factura[^\d\n]*([\d.]+,\d{2})/i) ??
+    totalsText.match(/Total\s+neto\s+factura[^\d\n]*([\d.]+,\d{2})/i) ??
+    totalsText.match(/(?:total\s+(?:a\s+pagar|neto)|valor\s+total)\s*[:.]?\s*([\d.,]+)/i);
   const totalFactura = parseAmount(totalMatch?.[1] ?? "");
 
-  // Validar cuadre
+  // Validar cuadre (subtotal + IVA + INC ≈ total)
   if (subtotal !== null && totalFactura !== null) {
     const ivaVal = iva ?? 0;
-    if (Math.abs((subtotal + ivaVal) - totalFactura) > 1) {
+    const incVal = inc ?? 0;
+    if (Math.abs((subtotal + ivaVal + incVal) - totalFactura) > 100) {
       warnings.push(
-        `Cuadre PDF: subtotal(${subtotal}) + IVA(${ivaVal}) ≠ total(${totalFactura})`
+        `Cuadre PDF: subtotal(${subtotal}) + IVA(${ivaVal}) + INC(${incVal}) ≠ total(${totalFactura})`
       );
     }
   }
@@ -584,10 +736,10 @@ export function extractDianInvoiceFromPdfText(
     totales_recargo_detalle: notFound(),
     totales_total_bruto_factura: p(subtotal, "regex/subtotal", 0.60),
     totales_IVA: p(iva ?? 0, "regex/iva", 0.65),
-    totales_INC: notFound(),
+    totales_INC: p(inc ?? null, "regex/inc", 0.70),
     totales_bolsas: notFound(),
     totales_otros_impuestos: notFound(),
-    totales_total_impuesto: p(iva ?? 0, "regex/iva", 0.65),
+    totales_total_impuesto: p((iva ?? 0) + (inc ?? 0), "regex/impuesto_total", 0.65),
     totales_total_neto_factura: p(totalFactura, "regex/total_factura"),
     totales_descuento_global: notFound(),
     totales_recargo_global: notFound(),

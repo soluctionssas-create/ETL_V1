@@ -225,3 +225,273 @@ CREATE POLICY "facturas_dian_detalle_update_own_tenant"
 --   AND tablename IN ('batches', 'invoices', 'facturas_dian', 'facturas_dian_detalle')
 -- ORDER BY tablename, policyname;
 -- =============================================================================
+
+
+-- =============================================================================
+-- SECCIÓN: Motor Tributario — RLS para tablas del sprint Task 5-6
+-- Generado: Task 7 Estabilización
+-- Idempotente: DROP POLICY IF EXISTS + CREATE POLICY
+-- Nota: Los routes usan service_role_key (bypassa RLS). Estas policies
+-- protegen el acceso directo con anon/authenticated key (dashboard, SDK).
+-- =============================================================================
+
+
+-- =============================================================================
+-- TABLA: invoice_tax_calculations
+-- Una fila por factura procesada por el motor tributario.
+-- Aislamiento completo por tenant_id.
+-- =============================================================================
+ALTER TABLE public.invoice_tax_calculations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "itc_select_own_tenant" ON public.invoice_tax_calculations;
+CREATE POLICY "itc_select_own_tenant"
+  ON public.invoice_tax_calculations
+  FOR SELECT
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "itc_insert_own_tenant" ON public.invoice_tax_calculations;
+CREATE POLICY "itc_insert_own_tenant"
+  ON public.invoice_tax_calculations
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "itc_update_own_tenant" ON public.invoice_tax_calculations;
+CREATE POLICY "itc_update_own_tenant"
+  ON public.invoice_tax_calculations
+  FOR UPDATE
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+-- DELETE bloqueado para authenticated. service_role puede borrar desde backend.
+
+
+-- =============================================================================
+-- TABLA: invoice_line_classifications
+-- Tabla futura (no poblada actualmente). RLS habilitada preventivamente.
+-- Los datos de líneas viven en invoice_tax_calculations.result_json.
+-- =============================================================================
+ALTER TABLE public.invoice_line_classifications ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "ilc_select_own_tenant" ON public.invoice_line_classifications;
+CREATE POLICY "ilc_select_own_tenant"
+  ON public.invoice_line_classifications
+  FOR SELECT
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "ilc_insert_own_tenant" ON public.invoice_line_classifications;
+CREATE POLICY "ilc_insert_own_tenant"
+  ON public.invoice_line_classifications
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "ilc_update_own_tenant" ON public.invoice_line_classifications;
+CREATE POLICY "ilc_update_own_tenant"
+  ON public.invoice_line_classifications
+  FOR UPDATE
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+
+-- =============================================================================
+-- TABLA: invoice_tax_calculation_groups
+-- Tabla futura (no poblada actualmente). RLS habilitada preventivamente.
+-- Los grupos tributarios viven en invoice_tax_calculations.result_json.
+-- =============================================================================
+ALTER TABLE public.invoice_tax_calculation_groups ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "itcg_select_own_tenant" ON public.invoice_tax_calculation_groups;
+CREATE POLICY "itcg_select_own_tenant"
+  ON public.invoice_tax_calculation_groups
+  FOR SELECT
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "itcg_insert_own_tenant" ON public.invoice_tax_calculation_groups;
+CREATE POLICY "itcg_insert_own_tenant"
+  ON public.invoice_tax_calculation_groups
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "itcg_update_own_tenant" ON public.invoice_tax_calculation_groups;
+CREATE POLICY "itcg_update_own_tenant"
+  ON public.invoice_tax_calculation_groups
+  FOR UPDATE
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+
+-- =============================================================================
+-- TABLA: tenant_supplier_memory
+-- Memoria histórica por proveedor y tenant.
+-- =============================================================================
+ALTER TABLE public.tenant_supplier_memory ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "tsm_select_own_tenant" ON public.tenant_supplier_memory;
+CREATE POLICY "tsm_select_own_tenant"
+  ON public.tenant_supplier_memory
+  FOR SELECT
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "tsm_insert_own_tenant" ON public.tenant_supplier_memory;
+CREATE POLICY "tsm_insert_own_tenant"
+  ON public.tenant_supplier_memory
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "tsm_update_own_tenant" ON public.tenant_supplier_memory;
+CREATE POLICY "tsm_update_own_tenant"
+  ON public.tenant_supplier_memory
+  FOR UPDATE
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+
+-- =============================================================================
+-- TABLA: tenant_tax_classification_memory
+-- Aprendizaje por patrón de descripción de ítem + proveedor.
+-- =============================================================================
+ALTER TABLE public.tenant_tax_classification_memory ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "ttcm_select_own_tenant" ON public.tenant_tax_classification_memory;
+CREATE POLICY "ttcm_select_own_tenant"
+  ON public.tenant_tax_classification_memory
+  FOR SELECT
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "ttcm_insert_own_tenant" ON public.tenant_tax_classification_memory;
+CREATE POLICY "ttcm_insert_own_tenant"
+  ON public.tenant_tax_classification_memory
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "ttcm_update_own_tenant" ON public.tenant_tax_classification_memory;
+CREATE POLICY "ttcm_update_own_tenant"
+  ON public.tenant_tax_classification_memory
+  FOR UPDATE
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+
+-- =============================================================================
+-- TABLA: tenant_reclassification_audit
+-- Auditoría de reclasificaciones manuales. Solo lectura para authenticated;
+-- escritura exclusivamente por service_role (routes backend).
+-- =============================================================================
+ALTER TABLE public.tenant_reclassification_audit ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "tra_select_own_tenant" ON public.tenant_reclassification_audit;
+CREATE POLICY "tra_select_own_tenant"
+  ON public.tenant_reclassification_audit
+  FOR SELECT
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id());
+
+-- INSERT y UPDATE solo desde service_role (backend). No definir policy para
+-- authenticated → acceso denegado para INSERT/UPDATE/DELETE desde cliente.
+
+
+-- =============================================================================
+-- TABLA: tenant_accounting_patterns
+-- Patrones contables aprendidos de movimientos históricos importados.
+-- =============================================================================
+ALTER TABLE public.tenant_accounting_patterns ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "tap_select_own_tenant" ON public.tenant_accounting_patterns;
+CREATE POLICY "tap_select_own_tenant"
+  ON public.tenant_accounting_patterns
+  FOR SELECT
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "tap_insert_own_tenant" ON public.tenant_accounting_patterns;
+CREATE POLICY "tap_insert_own_tenant"
+  ON public.tenant_accounting_patterns
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "tap_update_own_tenant" ON public.tenant_accounting_patterns;
+CREATE POLICY "tap_update_own_tenant"
+  ON public.tenant_accounting_patterns
+  FOR UPDATE
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+
+-- =============================================================================
+-- TABLA: accounting_movements_import
+-- Movimientos contables históricos importados (CSV/XLSX).
+-- =============================================================================
+ALTER TABLE public.accounting_movements_import ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "ami_select_own_tenant" ON public.accounting_movements_import;
+CREATE POLICY "ami_select_own_tenant"
+  ON public.accounting_movements_import
+  FOR SELECT
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "ami_insert_own_tenant" ON public.accounting_movements_import;
+CREATE POLICY "ami_insert_own_tenant"
+  ON public.accounting_movements_import
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+DROP POLICY IF EXISTS "ami_update_own_tenant" ON public.accounting_movements_import;
+CREATE POLICY "ami_update_own_tenant"
+  ON public.accounting_movements_import
+  FOR UPDATE
+  TO authenticated
+  USING (tenant_id = public.get_tenant_id())
+  WITH CHECK (tenant_id = public.get_tenant_id());
+
+
+-- =============================================================================
+-- VERIFICACIÓN POST-EJECUCIÓN — Motor Tributario
+-- Ejecutar estas queries después para confirmar RLS + policies:
+-- =============================================================================
+-- SELECT tablename, rowsecurity
+-- FROM pg_tables
+-- WHERE schemaname = 'public'
+--   AND tablename IN (
+--     'invoice_tax_calculations',
+--     'invoice_line_classifications',
+--     'invoice_tax_calculation_groups',
+--     'tenant_supplier_memory',
+--     'tenant_tax_classification_memory',
+--     'tenant_reclassification_audit',
+--     'tenant_accounting_patterns',
+--     'accounting_movements_import'
+--   );
+--
+-- SELECT tablename, policyname, cmd
+-- FROM pg_policies
+-- WHERE schemaname = 'public'
+--   AND tablename IN (
+--     'invoice_tax_calculations',
+--     'invoice_line_classifications',
+--     'invoice_tax_calculation_groups',
+--     'tenant_supplier_memory',
+--     'tenant_tax_classification_memory',
+--     'tenant_reclassification_audit',
+--     'tenant_accounting_patterns',
+--     'accounting_movements_import'
+--   )
+-- ORDER BY tablename, policyname;
+-- =============================================================================
