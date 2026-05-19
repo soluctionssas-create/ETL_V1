@@ -95,12 +95,15 @@ export function calculateInvoiceTaxes(
   const classifiedLines = classifyAllLines(canonical.detalle, config.retefuente);
 
   // ── Paso 2: Determinar ciudad para ReteICA ────────────────────────────────
+  // Prioridad: tenant_city (config explícita) > supplier_city (donde ocurrió la actividad)
+  // > buyer_city (ubicación del comprador).
+  // Para ReteICA colombiana, la actividad es gravable en el municipio del proveedor.
   const rawCity =
     options.tenant_city ??
-    options.buyer_city ??
-    buyerCity ??
     options.supplier_city ??
     supplierCity ??
+    options.buyer_city ??
+    buyerCity ??
     null;
 
   const resolvedCity = normalizeCity(rawCity);

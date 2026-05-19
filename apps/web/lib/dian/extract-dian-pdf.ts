@@ -495,12 +495,22 @@ export function extractDianInvoiceFromPdfText(
 
   // ── Datos del documento ────────────────────────────────────────────────────
 
+  // Formatos soportados:
+  //   F11-10191  → letra + dígitos + guión + dígitos (DIAN factura física/electrónica)
+  //   FE-123456  → prefijo FE/FV/FC/FT + guión + dígitos
+  //   SEDC-FV-1-00219 → prefijo alfanumérico con múltiples guiones
+  //   FE123456   → sin guión
+  //   No. 12345  → número sin prefijo de letras
   const invoiceNumberMatch =
-    fullText.match(/(?:Factura|No\.?|Número)\s*(?:de\s+venta\s+)?[:.]?\s*([A-Z]{0,5}\d{3,})/i) ??
-    fullText.match(/\bFE\s*(\d{3,})\b/i);
-  const invoiceNumber = invoiceNumberMatch
-    ? (invoiceNumberMatch[0].match(/[A-Z]{0,5}\d{3,}/) ?? invoiceNumberMatch)[0]
-    : null;
+    // «Número de Factura:   F11-10191» — patrón más específico primero
+    fullText.match(/[Nn][úu]mero\s+de\s+[Ff]actura\s*:\s+([A-Z][A-Z0-9]{0,5}-\d{3,}(?:-\d+)*)/i) ??
+    // «Factura: FV-1-2982124» u otros prefijos con guiones
+    fullText.match(/(?:Factura|No\.?|N[°o]?|Número)\s*(?:de\s+venta\s+)?[:.]?\s*([A-Z]{1,6}(?:-[A-Z0-9]+){1,3}-\d{3,})/i) ??
+    // «Número: FE12345» u otros sin guión (≥4 dígitos para evitar falsos positivos)
+    fullText.match(/(?:Factura|No\.?|Número)\s*(?:de\s+venta\s+)?[:.]?\s*([A-Z]{0,5}\d{4,})/i) ??
+    // «FE 123456» — abreviatura FE al inicio de palabra
+    fullText.match(/\bFE[- ]*(\d{3,})\b/i);
+  const invoiceNumber = invoiceNumberMatch?.[1] ?? null;
 
   // CUFE
   const cufeMatch = fullText.match(
@@ -597,6 +607,19 @@ export function extractDianInvoiceFromPdfText(
   const correoEmisorMatch = emisorText.match(/[\w.+-]+@[\w.-]+\.\w{2,6}/);
   const correoEmisor = correoEmisorMatch?.[0] ?? null;
 
+  // Ciudad/Municipio del emisor
+  // Maneja líneas concatenadas como: «Régimen Fiscal:R-99-PNMunicipio / Ciudad:   Cali»
+  const ciudadEmisorMatch = emisorText.match(
+    /[Mm]unicipio\s*\/\s*[Cc]iudad\s*:\s{1,5}([A-Za-záéíóúÁÉÍÓÚñÑ][A-Za-záéíóúÁÉÍÓÚñÑ\s.,()]{0,30}?)(?:\s{2,}|\n|\r|$)/
+  );
+  const ciudadEmisor = ciudadEmisorMatch?.[1]?.trim() ?? null;
+
+  // Departamento del emisor
+  const deptEmisorMatch = emisorText.match(
+    /[Dd]epartamento\s*:\s{1,5}([A-Za-záéíóúÁÉÍÓÚñÑ][A-Za-záéíóúÁÉÍÓÚñÑ\s]{1,30}?)(?:\s{2,}|\n|\r|$)/
+  );
+  const deptEmisor = deptEmisorMatch?.[1]?.trim() ?? null;
+
   // ── Adquiriente ────────────────────────────────────────────────────────────
 
   const adquirienteText = adquirienteLines.join("\n");
@@ -609,6 +632,18 @@ export function extractDianInvoiceFromPdfText(
   // Correo adquiriente
   const correoClienteMatch = adquirienteText.match(/[\w.+-]+@[\w.-]+\.\w{2,6}/);
   const correoCliente = correoClienteMatch?.[0] ?? null;
+
+  // Ciudad/Municipio del adquiriente
+  const ciudadClienteMatch = adquirienteText.match(
+    /[Mm]unicipio\s*\/\s*[Cc]iudad\s*:\s{1,5}([A-Za-záéíóúÁÉÍÓÚñÑ][A-Za-záéíóúÁÉÍÓÚñÑ\s.,()]{0,30}?)(?:\s{2,}|\n|\r|$)/
+  );
+  const ciudadCliente = ciudadClienteMatch?.[1]?.trim() ?? null;
+
+  // Departamento del adquiriente
+  const deptClienteMatch = adquirienteText.match(
+    /[Dd]epartamento\s*:\s{1,5}([A-Za-záéíóúÁÉÍÓÚñÑ][A-Za-záéíóúÁÉÍÓÚñÑ\s]{1,30}?)(?:\s{2,}|\n|\r|$)/
+  );
+  const deptCliente = deptClienteMatch?.[1]?.trim() ?? null;
 
   // ── Detalle ────────────────────────────────────────────────────────────────
 
@@ -723,8 +758,8 @@ export function extractDianInvoiceFromPdfText(
     datos_emisor_vendedor_responsabilidad_tributaria: notFound(),
     datos_emisor_vendedor_actividad_economica: p(actividadEconomica, "regex/ciiu", 0.70),
     datos_emisor_vendedor_pais: p("CO", "inferred_co", 0.50),
-    datos_emisor_vendedor_departamento: notFound(),
-    datos_emisor_vendedor_municipio_ciudad: notFound(),
+    datos_emisor_vendedor_departamento: p(deptEmisor, "regex/departamento", 0.65),
+    datos_emisor_vendedor_municipio_ciudad: p(ciudadEmisor, "regex/municipio_ciudad", 0.70),
     datos_emisor_vendedor_direccion: p(direccionEmisor, "regex/direccion", 0.55),
     datos_emisor_vendedor_telefono_movil: p(telEmisor, "regex/telefono", 0.60),
     datos_emisor_vendedor_correo: p(correoEmisor, "regex/email", 0.80),
@@ -736,8 +771,8 @@ export function extractDianInvoiceFromPdfText(
     datos_adquiriente_comprador_regimen_fiscal: notFound(),
     datos_adquiriente_comprador_responsabilidad_tributaria: notFound(),
     datos_adquiriente_comprador_pais: p("CO", "inferred_co", 0.50),
-    datos_adquiriente_comprador_departamento: notFound(),
-    datos_adquiriente_comprador_municipio_ciudad: notFound(),
+    datos_adquiriente_comprador_departamento: p(deptCliente, "regex/departamento", 0.65),
+    datos_adquiriente_comprador_municipio_ciudad: p(ciudadCliente, "regex/municipio_ciudad", 0.70),
     datos_adquiriente_comprador_direccion: notFound(),
     datos_adquiriente_comprador_telefono_movil: notFound(),
     datos_adquiriente_comprador_correo: p(correoCliente, "regex/email", 0.80),

@@ -278,4 +278,36 @@ describe.skipIf(!existsSync(FIXTURE_PATH))("Factura grande PDF real — F11-1019
     expect(result.differences.reteica).toBe(171_585);
     expect(result.differences.reteiva).toBe(0);
   });
+
+  // ── Número de factura ─────────────────────────────────────────────────────
+
+  it("invoice_number extrae F11-10191 (no DESCONOCIDA, no vacío)", () => {
+
+    const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
+    const invoiceNum = canonical.datos_documento_numero_factura.value;
+    expect(invoiceNum).not.toBeNull();
+    expect(invoiceNum).not.toBe("DESCONOCIDA");
+    expect(invoiceNum).toBe("F11-10191");
+  });
+
+  // ── Ciudad del emisor ─────────────────────────────────────────────────────
+
+  it("Emisor ciudad extraída es Cali (para ReteICA sin tenant_city)", () => {
+
+    const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
+    const ciudad = canonical.datos_emisor_vendedor_municipio_ciudad.value;
+    expect(ciudad).not.toBeNull();
+    expect(ciudad?.toLowerCase()).toContain("cali");
+  });
+
+  it("ReteICA usa ciudad del emisor (Cali) cuando no se pasa tenant_city explícito", () => {
+
+    const canonical = extractDianInvoiceFromPdfText(pdfText, { fileName: "factura_iteam_grandes.pdf" });
+    const config = getDefaultTaxRulesConfig();
+    // Sin tenant_city → debe usar la ciudad del emisor extraída del PDF (Cali)
+    const result = calculateInvoiceTaxes(canonical, config, {});
+    // Con ciudad Cali inferida, ReteICA debe calcularse (no = 0)
+    expect(result.city).toBe("CALI");
+    expect(result.totals.reteica).toBe(171_585);
+  });
 });
