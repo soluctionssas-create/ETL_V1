@@ -91,8 +91,9 @@ export function calculateInvoiceTaxes(
   const reportedReteiva = canonical.totales_rete_iva.value ?? 0;
   const reportedReteica = canonical.totales_rete_ica.value ?? 0;
 
-  // ── Paso 1: Clasificar líneas ─────────────────────────────────────────────
-  const classifiedLines = classifyAllLines(canonical.detalle, config.retefuente);
+  // ── Paso 1: Clasificar líneas (con contexto contable si disponible) ─────────
+  const classifyContext = options.classify_context ?? undefined;
+  const classifiedLines = classifyAllLines(canonical.detalle, config.retefuente, classifyContext);
 
   // ── Paso 2: Determinar ciudad para ReteICA ────────────────────────────────
   // Prioridad: tenant_city (config explícita) > supplier_city (donde ocurrió la actividad)

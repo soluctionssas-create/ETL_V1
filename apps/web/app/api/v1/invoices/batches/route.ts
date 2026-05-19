@@ -11,6 +11,7 @@ import {
 import type { DianCanonicalInvoice } from "@/lib/dian/dian-canonical-types";
 import { calculateInvoiceTaxes } from "@/lib/tax/calculate-invoice-taxes";
 import { getDefaultTaxRulesConfig } from "@/lib/tax/tax-rules-loader";
+import { loadClassifyContext } from "@/lib/tax/load-classify-context";
 
 export const runtime = "nodejs";
 
@@ -655,9 +656,18 @@ export async function POST(request: NextRequest) {
       if (seed.canonical) {
         try {
           const taxConfig = getDefaultTaxRulesConfig();
+          // ── Contexto contable por proveedor (Task 19.1) ──────────────────────
+          const classifyCtx = supabase && tenantId
+            ? await loadClassifyContext({
+                supabase,
+                tenantId,
+                supplierNit: seed.canonical.datos_emisor_vendedor_nit_emisor.value ?? null,
+              }).catch(() => undefined)
+            : undefined;
           const taxResult = calculateInvoiceTaxes(seed.canonical, taxConfig, {
             supplier_city: seed.canonical.datos_emisor_vendedor_municipio_ciudad.value ?? undefined,
             buyer_city: seed.canonical.datos_adquiriente_comprador_municipio_ciudad.value ?? undefined,
+            classify_context: classifyCtx,
           });
 
           const taxPayload: Record<string, unknown> = {

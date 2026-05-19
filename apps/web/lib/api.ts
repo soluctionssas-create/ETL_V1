@@ -372,6 +372,12 @@ export interface ClassifiedLine {
   confidence: number;
   reasons: string[];
   requires_review: boolean;
+  // ── Sugerencia contable (Task 19) ─────────────────────────────────────────
+  suggested_account_code?: string | null;
+  suggested_account_name?: string | null;
+  payable_account_code?: string | null;
+  cost_or_expense?: "cost" | "expense" | "asset" | "liability" | "unknown";
+  memory_source?: "manual" | "history" | "rule/ciiu" | "rule/kind" | "default";
 }
 
 /** Grupo de base tributaria calculado por el motor */

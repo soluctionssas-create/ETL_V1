@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { calculateInvoiceTaxes } from "@/lib/tax/calculate-invoice-taxes";
 import { getDefaultTaxRulesConfig } from "@/lib/tax/tax-rules-loader";
+import { loadClassifyContext } from "@/lib/tax/load-classify-context";
 import type { DianCanonicalInvoice } from "@/lib/dian/dian-canonical-types";
 
 export const runtime = "nodejs";
@@ -110,6 +111,10 @@ export async function POST(
     let skipped = 0;
     const errors: string[] = [];
 
+    // Cache de ClassifyContext por NIT — evita N consultas para el mismo proveedor (Task 19.1)
+    type ClassifyCtx = Awaited<ReturnType<typeof loadClassifyContext>>;
+    const classifyCtxCache = new Map<string, ClassifyCtx>();
+
     for (const row of dianRows ?? []) {
       const dian = row as { id: string; canonical_invoice_json: DianCanonicalInvoice | null };
       if (!dian.canonical_invoice_json) {
@@ -119,9 +124,20 @@ export async function POST(
 
       try {
         const canonical = dian.canonical_invoice_json;
+        // ── Contexto contable por proveedor (Task 19.1) ──────────────────────
+        const supplierNit = canonical.datos_emisor_vendedor_nit_emisor.value ?? null;
+        let classifyCtx: ClassifyCtx | undefined;
+        if (supplierNit) {
+          if (!classifyCtxCache.has(supplierNit)) {
+            const ctx = await loadClassifyContext({ supabase, tenantId, supplierNit }).catch(() => undefined);
+            if (ctx) classifyCtxCache.set(supplierNit, ctx);
+          }
+          classifyCtx = classifyCtxCache.get(supplierNit);
+        }
         const taxResult = calculateInvoiceTaxes(canonical, taxConfig, {
           supplier_city: canonical.datos_emisor_vendedor_municipio_ciudad.value ?? undefined,
           buyer_city: canonical.datos_adquiriente_comprador_municipio_ciudad.value ?? undefined,
+          classify_context: classifyCtx,
         });
 
         const invoiceNumber = taxResult.invoice_number;

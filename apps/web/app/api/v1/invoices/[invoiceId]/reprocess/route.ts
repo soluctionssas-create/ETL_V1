@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { calculateInvoiceTaxes } from "@/lib/tax/calculate-invoice-taxes";
 import { getDefaultTaxRulesConfig } from "@/lib/tax/tax-rules-loader";
+import { loadClassifyContext } from "@/lib/tax/load-classify-context";
 import type { DianCanonicalInvoice } from "@/lib/dian/dian-canonical-types";
 
 export const runtime = "nodejs";
@@ -111,9 +112,16 @@ export async function POST(
 
     // Re-ejecutar motor tributario
     const taxConfig = getDefaultTaxRulesConfig();
+    // ── Contexto contable por proveedor (Task 19.1) ──────────────────────────
+    const classifyCtx = await loadClassifyContext({
+      supabase,
+      tenantId,
+      supplierNit: canonical.datos_emisor_vendedor_nit_emisor.value ?? null,
+    }).catch(() => undefined);
     const taxResult = calculateInvoiceTaxes(canonical, taxConfig, {
       supplier_city: canonical.datos_emisor_vendedor_municipio_ciudad.value ?? undefined,
       buyer_city: canonical.datos_adquiriente_comprador_municipio_ciudad.value ?? undefined,
+      classify_context: classifyCtx,
     });
 
     const hasNoDetail = canonical.detalle.length === 0;

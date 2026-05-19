@@ -29,6 +29,14 @@ export interface ClassifiedInvoiceLine {
   confidence: number;         // 0..1
   reasons: string[];          // rastro auditable de la clasificación
   requires_review: boolean;
+  // ── Sugerencia contable (Task 19) ─────────────────────────────────────────
+  /** Cuenta PUC sugerida. null = sin evidencia suficiente → requires_review. */
+  suggested_account_code?: string | null;
+  suggested_account_name?: string | null;
+  payable_account_code?: string | null;
+  cost_or_expense?: "cost" | "expense" | "asset" | "liability" | "unknown";
+  /** Fuente de la sugerencia para trazabilidad. */
+  memory_source?: "manual" | "history" | "rule/ciiu" | "rule/kind" | "default";
 }
 
 // ─── Grupo de base tributaria ─────────────────────────────────────────────────
@@ -152,6 +160,11 @@ export interface TaxEngineOptions {
   buyer_city?: string;
   /** Ciudad del emisor (fallback de último recurso) */
   supplier_city?: string;
+  /**
+   * Contexto de clasificación contable (Task 19).
+   * Si se provee, cada línea recibirá una sugerencia de cuenta PUC.
+   */
+  classify_context?: import("./suggest-account").ClassifyContext;
 }
 
 // ─── Comparador de retenciones ────────────────────────────────────────────────

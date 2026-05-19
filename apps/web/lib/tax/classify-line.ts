@@ -4,6 +4,8 @@
  * Determina si cada ítem es `purchase` (compra/bien) o `service` (servicio).
  * La clasificación se hace por matching de keywords en la descripción.
  * NO usa IA para calcular impuestos — solo para sugerir clasificación.
+ *
+ * Task 19: acepta ClassifyContext opcional para sugerir cuenta contable PUC.
  */
 
 import type {
@@ -13,6 +15,10 @@ import type {
   RetefuenteConfig,
 } from "./tax-types";
 import type { DianCanonicalInvoiceLine } from "../dian/dian-canonical-types";
+import {
+  suggestAccountForLine,
+  type ClassifyContext,
+} from "./suggest-account";
 
 // ─── Listas de keywords ────────────────────────────────────────────────────────
 
@@ -158,11 +164,13 @@ function matchKeywords(text: string, patterns: RegExp[]): string[] {
 /**
  * Clasifica una sola línea del canonical como purchase/service/mixed/unknown.
  * Si se provee la config de ReteFuente, también asigna el concepto/cuenta.
+ * Si se provee un ClassifyContext, enriquece con sugerencia contable PUC (Task 19).
  */
 export function classifyLine(
   line: DianCanonicalInvoiceLine,
   lineIndex: number,
-  retefuenteConfig?: RetefuenteConfig
+  retefuenteConfig?: RetefuenteConfig,
+  classifyContext?: ClassifyContext
 ): ClassifiedInvoiceLine {
   const desc = line.detalle_Descripcion?.value ?? "";
   const code = line.detalle_Codigo?.value ?? null;
@@ -213,6 +221,27 @@ export function classifyLine(
     reasons.push(`ReteFuente: ${rule.concept} (${(rule.rate * 100).toFixed(1)}%)`);
   }
 
+  // ── Sugerencia contable PUC (Task 19) ─────────────────────────────────────
+  let suggestedAccountCode: string | null = null;
+  let suggestedAccountName: string | null = null;
+  let payableAccountCode: string | null = null;
+  let costOrExpense: ClassifiedInvoiceLine["cost_or_expense"] = "unknown";
+  let memorySource: ClassifiedInvoiceLine["memory_source"] = "default";
+
+  if (classifyContext) {
+    const suggestion = suggestAccountForLine(kind, classifyContext);
+    suggestedAccountCode = suggestion.account_code;
+    suggestedAccountName = suggestion.account_name;
+    payableAccountCode = suggestion.payable_account_code;
+    costOrExpense = suggestion.cost_or_expense;
+    memorySource = suggestion.memory_source;
+    // Actualizar confianza con la del motor contable
+    confidence = Math.max(confidence, suggestion.confidence);
+    reasons.push(...suggestion.reasons);
+    // Si no hay cuenta sugerida, marcar para revisión
+    if (!suggestedAccountCode) requiresReview = true;
+  }
+
   return {
     line_id: `L${lineIndex + 1}`,
     source_line_number: lineIndex + 1,
@@ -231,6 +260,16 @@ export function classifyLine(
     confidence,
     reasons,
     requires_review: requiresReview,
+    // Campos contables: solo se incluyen cuando se provee classifyContext (Task 19)
+    ...(classifyContext
+      ? {
+          suggested_account_code: suggestedAccountCode,
+          suggested_account_name: suggestedAccountName,
+          payable_account_code: payableAccountCode,
+          cost_or_expense: costOrExpense,
+          memory_source: memorySource,
+        }
+      : {}),
   };
 }
 
@@ -256,10 +295,13 @@ export function findRetefuenteRule(
 
 /**
  * Clasifica todas las líneas de una factura.
+ * Si se provee classifyContext, enriquece cada línea con sugerencia contable PUC.
  */
 export function classifyAllLines(
   lines: DianCanonicalInvoiceLine[],
-  retefuenteConfig?: RetefuenteConfig
+  retefuenteConfig?: RetefuenteConfig,
+  classifyContext?: ClassifyContext
 ): ClassifiedInvoiceLine[] {
-  return lines.map((line, idx) => classifyLine(line, idx, retefuenteConfig));
+  return lines.map((line, idx) => classifyLine(line, idx, retefuenteConfig, classifyContext));
 }
+

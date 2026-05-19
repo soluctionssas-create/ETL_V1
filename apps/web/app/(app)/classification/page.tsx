@@ -162,17 +162,45 @@ export default function ClassificationPage() {
       {
         field: "_account",
         headerName: "Cuenta IA",
-        minWidth: 150,
+        minWidth: 180,
         sortable: false,
         renderCell: (p) => {
           const mc = p.row.result_json?.manual_classification;
+          const lines = p.row.result_json?.classified_lines ?? [];
+          const firstWithAccount = lines.find((l: { suggested_account_code?: string | null }) => l.suggested_account_code);
+          const memSrc = (firstWithAccount as { memory_source?: string } | undefined)?.memory_source;
+          const isManual = !!mc?.account_code;
+          const label = accountDisplay(p.row);
+          const sourceColor: Record<string, "success" | "info" | "warning" | "default"> = {
+            manual: "success",
+            history: "info",
+            "rule/ciiu": "warning",
+            "rule/kind": "default",
+            default: "default",
+          };
+          const chipColor = isManual
+            ? "success"
+            : (sourceColor[memSrc ?? "default"] ?? "info");
+          const tooltip = isManual
+            ? "Reclasificado manualmente"
+            : memSrc === "manual"
+            ? "Cuenta de memoria del proveedor"
+            : memSrc === "history"
+            ? "Cuenta de patrones históricos importados"
+            : memSrc === "rule/ciiu"
+            ? "Cuenta sugerida por actividad económica CIIU"
+            : memSrc === "rule/kind"
+            ? "Cuenta pendiente — clasificación por tipo de línea"
+            : "Cuenta no determinada";
           return (
-            <Chip
-              icon={mc?.account_code ? <CheckCircleRounded /> : <AutoAwesomeRounded />}
-              label={accountDisplay(p.row)}
-              color={mc?.account_code ? "success" : "info"}
-              size="small"
-            />
+            <Tooltip title={tooltip}>
+              <Chip
+                icon={isManual ? <CheckCircleRounded /> : <AutoAwesomeRounded />}
+                label={label}
+                color={chipColor}
+                size="small"
+              />
+            </Tooltip>
           );
         },
       },

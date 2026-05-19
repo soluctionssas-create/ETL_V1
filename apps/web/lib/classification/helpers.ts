@@ -40,14 +40,33 @@ export function rowStatus(c: TaxCalculation): "ok" | "warning" | "error" {
 
 /**
  * Determina la cuenta contable a mostrar en la columna IA.
- * Prioridad: manual_classification.account_code → kind dominante → "–"
- * Nunca devuelve un valor hardcodeado como 513595.
+ * Prioridad:
+ *   1. manual_classification.account_code (reclasificación manual del usuario)
+ *   2. suggested_account_code de la primera línea con sugerencia (Task 19)
+ *   3. kind dominante como etiqueta visual genérica (fallback legible)
+ *   4. "–" si no hay ninguna información
+ * Nunca devuelve un valor hardcodeado como "513595" si no fue asignado explícitamente.
  */
 export function accountDisplay(c: TaxCalculation): string {
   const mc = c.result_json?.manual_classification;
   if (mc?.account_code) return mc.account_code;
   const lines = c.result_json?.classified_lines;
   if (!lines?.length) return "–";
+  // Buscar la primera línea con suggested_account_code (Task 19)
+  const firstWithAccount = lines.find(
+    (l) => (l as { suggested_account_code?: string | null }).suggested_account_code
+  );
+  const suggested = (firstWithAccount as { suggested_account_code?: string | null } | undefined)
+    ?.suggested_account_code;
+  if (suggested) {
+    // Si todas las líneas tienen la misma cuenta sugerida, mostrarla directamente
+    const allSame = lines.every(
+      (l) =>
+        (l as { suggested_account_code?: string | null }).suggested_account_code === suggested
+    );
+    return allSame ? suggested : `${suggested} (mixto)`;
+  }
+  // Fallback: etiqueta por kind dominante
   const counts: Record<string, number> = {};
   for (const l of lines) counts[l.kind] = (counts[l.kind] ?? 0) + 1;
   const dominant =
