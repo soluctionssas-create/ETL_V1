@@ -143,6 +143,24 @@ export async function POST(
         const invoiceNumber = taxResult.invoice_number;
         const invoiceId = invoiceMap.get(invoiceNumber);
 
+        // ── Cuenta contable sugerida (Task 19) ──────────────────────────────
+        // La cuenta viene de la memoria del proveedor (classifyCtx) o de la
+        // primera línea clasificada. La fuente manual (manually_confirmed) tiene
+        // máxima prioridad; si no hay confirmación manual se marca "auto".
+        const sm = classifyCtx?.supplier_memory;
+        const firstLine = taxResult.classified_lines[0] as
+          | { suggested_account_code?: string | null; memory_source?: string | null }
+          | undefined;
+        const suggestedAccountCode =
+          sm?.default_account_code ?? firstLine?.suggested_account_code ?? null;
+        const costOrExpense =
+          sm?.default_cost_or_expense ?? null;
+        const accountMemorySource: string | null = sm?.manually_confirmed
+          ? "manual"
+          : sm?.default_account_code
+          ? "auto"
+          : firstLine?.memory_source ?? null;
+
         const taxPayload: Record<string, unknown> = {
           batch_id: batchId,
           invoice_id: invoiceId ?? null,
@@ -170,6 +188,9 @@ export async function POST(
           requires_review: taxResult.requires_review || canonical.detalle.length === 0,
           warnings_json: taxResult.warnings,
           result_json: taxResult,
+          suggested_account_code: suggestedAccountCode,
+          cost_or_expense: costOrExpense,
+          account_memory_source: accountMemorySource,
         };
 
         const { error: upsertErr } = await supabase

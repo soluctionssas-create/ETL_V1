@@ -127,7 +127,10 @@ export async function loadClassifyContext(
       patternsQuery = patternsQuery.eq("supplier_nit", supplierNit);
     }
 
-    const patternsResult = await patternsQuery.catch(() => ({ data: null, error: null }));
+    const patternsResult = await patternsQuery.then(
+      (r: { data: unknown; error: unknown }) => r,
+      () => ({ data: null, error: null })
+    );
 
     if (patternsResult.data) {
       accountingPatterns = (patternsResult.data as Record<string, unknown>[]).map((row) => ({
